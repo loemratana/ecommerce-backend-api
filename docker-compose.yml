@@ -1,0 +1,15 @@
+services:
+  postgres-db:
+    image: postgres:17
+    container_name: ecommerce-db
+    environment:
+      POSTGRES_USER: admin-ecommerce
+      POSTGRES_PASSWORD: ecommerce!120@897
+      POSTGRES_DB: ecommerce
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+
+volumes:
+  pgdata:
