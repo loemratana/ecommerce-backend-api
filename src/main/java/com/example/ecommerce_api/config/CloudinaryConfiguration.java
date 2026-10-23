@@ -24,9 +24,11 @@ public class CloudinaryConfiguration {
     public Cloudinary cloudinary() {
 
         return new Cloudinary(ObjectUtils.asMap(
-                "cloudName",cloudName,
-                "apiKey",apiKey,
-                "apiSecret",apiSecret
+                // the SDK only recognises snake_case keys; camelCase ones are silently ignored
+                "cloud_name", cloudName,
+                "api_key", apiKey,
+                "api_secret", apiSecret,
+                "secure", true
         ));
 
     }

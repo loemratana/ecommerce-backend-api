@@ -13,11 +13,11 @@ public class ProductVariantMapper {
 
     public ProductVariants toEntity(ProductVariantsRequest request) {
         ProductVariants productVariants = new ProductVariants();
-        productVariants.setColor(request.getColor());
+        productVariants.setColor(normalizeColor(request.getColor()));
         productVariants.setSku(request.getSku());
         productVariants.setPrice(request.getPrice());
         productVariants.setPriceAfterDiscount(request.getPriceAfterDiscount());
-        productVariants.setSoldQuantity(request.getSoldQuantity()  != null ? request.getSoldQuantity() : 0);
+        productVariants.setSoldQuantity(0);   // only the order flow (confirmSale) changes it
         return productVariants;
     }
 
@@ -25,11 +25,14 @@ public class ProductVariantMapper {
     {
         return ProductVariantResponse.builder()
                 .id(productVariants.getId())
+                .status(productVariants.getStatus())
                 .color(productVariants.getColor())
                 .sku(productVariants.getSku())
                 .price(productVariants.getPrice())
                 .priceAfterDiscount(productVariants.getPriceAfterDiscount())
                 .soldQuantity(productVariants.getSoldQuantity())
+                .availableQuantity(productVariants.getInventory() != null
+                        ? productVariants.getInventory().getAvailableQuantity() : 0)
                 .size(toSizeResponse(productVariants.getSize()))
                 .build();
     }
@@ -45,10 +48,13 @@ public class ProductVariantMapper {
     }
 
     public void updateEntity(ProductVariantsRequest request, ProductVariants entity) {
-        entity.setColor(request.getColor());
+        entity.setColor(normalizeColor(request.getColor()));
         entity.setSku(request.getSku());
         entity.setPrice(request.getPrice());
         entity.setPriceAfterDiscount(request.getPriceAfterDiscount());
-        entity.setSoldQuantity(request.getSoldQuantity() != null ? request.getSoldQuantity() : 0);
+    }
+
+    private String normalizeColor(String color) {
+        return color == null || color.isBlank() ? null : color.trim();
     }
 }

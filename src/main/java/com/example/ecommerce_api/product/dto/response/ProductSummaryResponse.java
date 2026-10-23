@@ -16,4 +16,6 @@ public class ProductSummaryResponse {
     private String slug;
     private BigDecimal price;
     private String imageUrl;
+
+    private Long totalSold;
 }

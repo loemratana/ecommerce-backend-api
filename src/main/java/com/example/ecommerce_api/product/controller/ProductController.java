@@ -1,9 +1,12 @@
 package com.example.ecommerce_api.product.controller;
 
 
+import com.example.ecommerce_api.common.exception.BadRequestException;
+import com.example.ecommerce_api.Enum.CatalogStatus;
 import com.example.ecommerce_api.product.dto.request.ProductRequest;
 import com.example.ecommerce_api.product.dto.response.ProductResponse;
 import com.example.ecommerce_api.product.dto.response.ProductStatsResponse;
+import com.example.ecommerce_api.product.dto.response.ProductSummaryResponse;
 import com.example.ecommerce_api.product.sevices.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/product")
@@ -53,6 +57,22 @@ public class ProductController {
         return ResponseEntity.ok(productService.getById(id));
     }
 
+
+    @Operation(summary = "Best sellers", description = "Active products with the most units sold in paid orders in the last N days")
+    @GetMapping("/best-sellers")
+    public ResponseEntity<List<ProductSummaryResponse>> getBestSellers(
+            @RequestParam(defaultValue = "30") int days,
+            @RequestParam(defaultValue = "12") int limit) {
+        return ResponseEntity.ok(productService.getBestSellers(days, limit));
+    }
+
+    @Operation(summary = "New arrivals", description = "Newest in-stock products added in the last N days")
+    @GetMapping("/new-arrivals")
+    public ResponseEntity<List<ProductSummaryResponse>> getNewArrivals(
+            @RequestParam(defaultValue = "30") int days,
+            @RequestParam(defaultValue = "12") int limit) {
+        return ResponseEntity.ok(productService.getNewArrivals(days, limit));
+    }
     @Operation(summary = "Get product dashboard stats",
             description = "Returns total/active/low-stock/out-of-stock product counts for the admin dashboard")
     @ApiResponses(value = {
@@ -71,6 +91,9 @@ public class ProductController {
     })
     @GetMapping
     public ResponseEntity<Page<ProductResponse>> getAllProducts(
+            @Parameter(description = "ACTIVE (default, what the shop shows), ARCHIVED or ALL")
+            @RequestParam(defaultValue = "ACTIVE") String status,
+
             @Parameter(description = "Filter by product title (partial match, case-insensitive)")
             @RequestParam(required = false) String title,
 
@@ -79,6 +102,9 @@ public class ProductController {
 
             @Parameter(description = "Filter by sub-category ID")
             @RequestParam(required = false) Long subCategoryId,
+
+            @Parameter(description = "Filter by category ID (matches any of its sub-categories)")
+            @RequestParam(required = false) Long categoryId,
 
             @Parameter(description = "Minimum price")
             @RequestParam(required = false) BigDecimal minPrice,
@@ -93,7 +119,7 @@ public class ProductController {
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<ProductResponse> page = productService.getAll(
-                title, brandId, subCategoryId, minPrice, maxPrice, minRating, pageable
+                parseStatus(status), title, brandId, subCategoryId, categoryId, minPrice, maxPrice, minRating, pageable
         );
         return ResponseEntity.ok(page);
     }
@@ -112,14 +138,33 @@ public class ProductController {
         return ResponseEntity.ok(productService.update(id, request));
     }
 
-    @Operation(summary = "Delete a product", description = "Deletes a product and all its associated variants and images (cascade)")
+    @Operation(summary = "Archive a product",
+            description = "Hides the product from the shop instead of deleting it; orders, returns and stock history are kept")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Product deleted successfully"),
+            @ApiResponse(responseCode = "204", description = "Product archived"),
             @ApiResponse(responseCode = "404", description = "Product not found")
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        productService.delete(id);
+        productService.archive(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Restore an archived product", description = "Makes the product visible in the shop again")
+    @PostMapping("/{id}/restore")
+    public ResponseEntity<Void> restoreProduct(@PathVariable Long id) {
+        productService.restore(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    private static CatalogStatus parseStatus(String status) {
+        if ("ALL".equalsIgnoreCase(status)) {
+            return null;
+        }
+        try {
+            return CatalogStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("status must be ACTIVE, ARCHIVED or ALL");
+        }
     }
 }

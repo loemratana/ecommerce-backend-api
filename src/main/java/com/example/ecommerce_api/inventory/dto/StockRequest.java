@@ -9,13 +9,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 
+/** Body for restocking a variant; the variant id comes from the URL path. */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class StockRequest {
-    @NotNull(message = "Product variant ID is required")
-    private Long productVariantId;
 
     @NotNull(message = "Quantity is required")
     @Min(value = 1, message = "Quantity must be greater than 0")

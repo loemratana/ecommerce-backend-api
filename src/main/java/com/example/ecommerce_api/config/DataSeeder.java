@@ -1,11 +1,14 @@
 package com.example.ecommerce_api.config;
 
+import com.example.ecommerce_api.inventory.entity.Inventory;
+
 import com.example.ecommerce_api.brand.entity.Brand;
 import com.example.ecommerce_api.brand.repository.BrandRepository;
 import com.example.ecommerce_api.category.entity.Category;
 import com.example.ecommerce_api.category.entity.SubCategory;
 import com.example.ecommerce_api.category.repository.CategoryRepository;
 import com.example.ecommerce_api.category.repository.SubCategoryRepository;
+import com.example.ecommerce_api.Enum.DiscountType;
 import com.example.ecommerce_api.coupon.entity.Coupon;
 import com.example.ecommerce_api.coupon.repository.CouponRepository;
 import com.example.ecommerce_api.permission.entity.Permission;
@@ -321,6 +324,8 @@ public class DataSeeder implements CommandLineRunner {
             variant.setSoldQuantity(0);
             variant.setSize(size);
             variant.setProduct(product);
+            // same as ProductService: every variant needs a stock record (persisted via cascade)
+            variant.setInventory(new Inventory(variant, 0));
             product.getVariants().add(variant);
 
             ProductImage image = new ProductImage();
@@ -348,7 +353,8 @@ public class DataSeeder implements CommandLineRunner {
         return couponRepository.findByCodeIgnoreCase(code).orElseGet(() -> {
             Coupon coupon = new Coupon();
             coupon.setCode(code);
-            coupon.setDiscountPercent(discountPercent);
+            coupon.setDiscountType(DiscountType.PERCENTAGE);
+            coupon.setDiscountValue(discountPercent);
             coupon.setExpiryDate(LocalDateTime.now().plusDays(90));
             coupon.setActive(true);
             return coupon;

@@ -27,4 +27,8 @@ public class SubCategoryRequest {
     @NotNull(message = "Category id is required")
     @Schema(example = "1")
     private Long categoryId;
+
+    @Size(max = 2048, message = "Image must be at most 2048 characters")
+    @Schema(example = "https://res.cloudinary.com/demo/image/upload/sub-categories/phones.png")
+    private String image;
 }

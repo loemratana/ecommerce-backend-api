@@ -2,13 +2,20 @@ package com.example.ecommerce_api.user.controller;
 
 
 import com.example.ecommerce_api.common.response.ApiResponse;
+import com.example.ecommerce_api.common.response.PageResponse;
 import com.example.ecommerce_api.user.dto.request.UpdatePasswordRequest;
+import com.example.ecommerce_api.user.dto.request.UpdateUserRequest;
 import com.example.ecommerce_api.user.dto.request.UserRequest;
 import com.example.ecommerce_api.user.dto.response.UserResponse;
 import com.example.ecommerce_api.user.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.bind.DefaultValue;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,14 +37,36 @@ public class UserController {
                 .body(ApiResponse.success(response, "User created successfully"));
     }
 
-    @Operation(description = "")
+    @Operation(description = "Update a user's email, name or profile picture; omitted fields are left unchanged")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponse>> updateUser(@PathVariable Long id,
-                                                                  @Valid @RequestBody UserRequest request) {
+                                                                  @Valid @RequestBody UpdateUserRequest request) {
 
         UserResponse response = userService.updateUser(id, request);
 
         return ResponseEntity.ok(ApiResponse.success(response, "User updated successfully"));
+    }
+
+
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getAllUsers(
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false, defaultValue = "") String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection
+    ) {
+
+        Sort sort = sortDirection.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page,size,sort);
+        PageResponse<UserResponse> response =
+                userService.getAllUser(active, search, pageable);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(response)
+        );
     }
 
 

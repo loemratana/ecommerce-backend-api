@@ -47,4 +47,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     RatingStats getRatingStats(@Param("productId") Long productId);
 
     boolean existsByUserIdAndProductId(Long userId, Long productId);
+
+    long countByUserId(Long userId);
 }

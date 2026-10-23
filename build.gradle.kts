@@ -29,8 +29,16 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.flywaydb:flyway-database-postgresql")
 
+	implementation("io.minio:minio:8.5.17")
+	implementation("com.stripe:stripe-java:34.0.0")
 
-    implementation("io.jsonwebtoken:jjwt-api:0.12.6")
+
+	implementation("org.apache.poi:poi-ooxml:5.4.1")                          // Excel (.xlsx)
+	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")  // invoice HTML template
+	implementation("org.xhtmlrenderer:flying-saucer-pdf:9.13.3")              // HTML → PDF (OpenPDF, shapes Khmer)
+
+
+	implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
     compileOnly("org.projectlombok:lombok")

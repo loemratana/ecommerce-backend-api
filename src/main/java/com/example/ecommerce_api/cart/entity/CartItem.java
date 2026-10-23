@@ -1,6 +1,7 @@
 package com.example.ecommerce_api.cart.entity;
 
 import com.example.ecommerce_api.product.entity.Product;
+import com.example.ecommerce_api.product.entity.ProductVariants;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import lombok.AllArgsConstructor;
@@ -19,23 +20,14 @@ import java.util.Objects;
 @Entity
 @Table(name = "cart_items",
         uniqueConstraints = {
-        @UniqueConstraint(
-                name = "uk_cart_product",
-                columnNames = {
-                        "cart_id",
-                        "product_id"
-                }
-        )
+                @UniqueConstraint(
+                        name = "uk_cart_product_variant",
+                        columnNames = {"cart_id", "product_variant_id"}
+                )
         },
         indexes = {
-                @Index(
-                        name = "idx_cart_item_cart_id",
-                        columnList = "cart_id"
-                ),
-                @Index(
-                        name = "idx_cart_item_product_id",
-                        columnList = "product_id"
-                )
+                @Index(name = "idx_cart_item_cart_id", columnList = "cart_id"),
+                @Index(name = "idx_cart_item_product_variant_id", columnList = "product_variant_id")
         }
 )
 @AllArgsConstructor
@@ -77,9 +69,10 @@ public class CartItem {
     @JoinColumn(name = "cart_id", nullable = false)
     private Cart cart;
 
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    @JoinColumn(name = "product_variant_id",nullable = false)
+    private ProductVariants productVariants;
 
 
 

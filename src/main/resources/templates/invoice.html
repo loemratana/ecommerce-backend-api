@@ -1,0 +1,134 @@
+
+<!DOCTYPE html>
+<!-- Rendered to PDF by Flying Saucer, which parses XML: keep every tag closed (<br/>, <meta/>) and avoid &nbsp; -->
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="'Invoice ' + ${order.orderNumber}">Invoice</title>
+    <style>
+        @page { size: A4; margin: 18mm 15mm; }
+        body { font-family: 'Kantumruy Pro';  /* bundled in resources/fonts; covers Khmer and Latin */ font-size: 10pt; color: #222; }
+        h1 { font-size: 22pt; margin: 0; color: #111; }
+        .muted { color: #666; }
+        .header { width: 100%; margin-bottom: 24px; }
+        .header td { vertical-align: top; }
+        .right { text-align: right; }
+        .parties { width: 100%; margin-bottom: 20px; }
+        .parties td { vertical-align: top; width: 50%; }
+        .label { font-size: 8pt; text-transform: uppercase; color: #888; margin-bottom: 4px; }
+        table.items { width: 100%; border-collapse: collapse; }
+        table.items th { background: #f2f2f2; text-align: left; padding: 6px; font-size: 9pt; border-bottom: 1px solid #ccc; }
+        table.items td { padding: 6px; border-bottom: 1px solid #eee; }
+        table.items .num { text-align: right; }
+        table.totals { width: 45%; margin-left: 55%; margin-top: 12px; border-collapse: collapse; }
+        table.totals td { padding: 4px 6px; }
+        table.totals .grand td { font-weight: bold; font-size: 12pt; border-top: 2px solid #222; }
+        .footer { margin-top: 40px; font-size: 8pt; color: #888; text-align: center; }
+    </style>
+</head>
+<body>
+
+<table class="header">
+    <tr>
+        <td>
+            <h1>INVOICE</h1>
+            <div class="muted" th:text="${order.orderNumber}">ORD-20261001-ABCDEF12</div>
+        </td>
+        <td class="right">
+            <strong th:text="${companyName}">Store</strong>
+            <div th:if="${!#strings.isEmpty(companyAddress)}" th:text="${companyAddress}">Address</div>
+            <div th:if="${!#strings.isEmpty(companyEmail)}" th:text="${companyEmail}">email</div>
+            <div th:if="${!#strings.isEmpty(companyPhone)}" th:text="${companyPhone}">phone</div>
+        </td>
+    </tr>
+</table>
+
+<table class="parties">
+    <tr>
+        <td>
+            <div class="label">Bill to</div>
+            <div th:text="${customer.firstName + ' ' + customer.lastName}">Customer</div>
+            <div th:text="${customer.email}">email</div>
+            <div th:if="${customer.phone != null}" th:text="${customer.phone}">phone</div>
+        </td>
+        <td>
+            <div class="label">Ship to</div>
+            <th:block th:if="${order.shippingAddress != null}" th:with="a=${order.shippingAddress}">
+                <div th:text="${a.recipientName}">Name</div>
+                <div th:text="${a.street}">Street</div>
+                <div th:text="${a.city + ', ' + a.state + ' ' + a.zipCode}">City</div>
+                <div th:text="${a.country}">Country</div>
+            </th:block>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding-top: 12px;">
+            <div class="label">Order date</div>
+            <div th:text="${#temporals.format(orderDate, 'dd MMM yyyy')}">01 Oct 2026</div>
+        </td>
+        <td style="padding-top: 12px;">
+            <div class="label">Invoice date</div>
+            <div th:text="${#temporals.format(issuedOn, 'dd MMM yyyy')}">01 Oct 2026</div>
+        </td>
+    </tr>
+</table>
+
+<table class="items">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>Item</th>
+        <th>SKU</th>
+        <th class="num">Qty</th>
+        <th class="num">Unit price</th>
+        <th class="num">Amount</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="item, stat : ${items}">
+        <td th:text="${stat.count}">1</td>
+        <td>
+            <span th:text="${item.productName}">Product</span>
+            <div class="muted" style="font-size: 8pt;"
+                 th:if="${item.color != null or item.sizeName != null}"
+                 th:text="${(item.color != null ? item.color : '') + (item.color != null and item.sizeName != null ? ' / ' : '') + (item.sizeName != null ? item.sizeName : '')}">Black / M</div>
+        </td>
+        <td th:text="${item.sku}">SKU</td>
+        <td class="num" th:text="${item.quantity}">1</td>
+        <td class="num" th:text="${#numbers.formatDecimal(item.priceAfterDiscount, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+        <td class="num" th:text="${#numbers.formatDecimal(item.lineTotal, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+    </tr>
+    </tbody>
+</table>
+
+<table class="totals">
+    <tr>
+        <td>Subtotal</td>
+        <td class="right" th:text="${#numbers.formatDecimal(order.subtotal, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+    </tr>
+    <tr th:each="c : ${coupons}">
+        <td th:text="'Coupon ' + ${c.couponCode}">Coupon</td>
+        <td class="right" th:text="'-' + ${#numbers.formatDecimal(c.discountAmount, 1, 'COMMA', 2, 'POINT')}">-0.00</td>
+    </tr>
+    <tr>
+        <td>Tax</td>
+        <td class="right" th:text="${#numbers.formatDecimal(order.taxPrice, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+    </tr>
+    <tr>
+        <td>Shipping</td>
+        <td class="right" th:text="${#numbers.formatDecimal(order.shippingPrice, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+    </tr>
+    <tr class="grand">
+        <td th:text="'Total (' + ${currency} + ')'">Total</td>
+        <td class="right" th:text="${#numbers.formatDecimal(order.totalOrderPrice, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+    </tr>
+    <tr th:if="${order.refundedAmount.signum() > 0}">
+        <td>Refunded</td>
+        <td class="right" th:text="'-' + ${#numbers.formatDecimal(order.refundedAmount, 1, 'COMMA', 2, 'POINT')}">-0.00</td>
+    </tr>
+</table>
+
+<div class="footer">Thank you for your order.</div>
+
+</body>
+</html>

@@ -1,6 +1,7 @@
 package com.example.ecommerce_api.product.entity;
 
 
+import com.example.ecommerce_api.Enum.CatalogStatus;
 import com.example.ecommerce_api.inventory.entity.Inventory;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -41,8 +42,12 @@ public class ProductVariants {
     private  Integer soldQuantity;
 
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private CatalogStatus status = CatalogStatus.ACTIVE;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "prouduct_id")
+    @JoinColumn(name = "prouduct_id", nullable = false)
     private Product product;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -60,4 +65,8 @@ public class ProductVariants {
 
     private LocalDateTime updateAt;
 
+
+    public boolean isActive() {
+        return status == CatalogStatus.ACTIVE;
+    }
 }

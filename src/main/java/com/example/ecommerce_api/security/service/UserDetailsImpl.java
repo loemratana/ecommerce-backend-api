@@ -19,6 +19,8 @@ public class UserDetailsImpl implements UserDetails {
 
     private final String password;
 
+    private final boolean active;
+
     private Collection<? extends GrantedAuthority> authorities;
 
     public  UserDetailsImpl(User user,Collection<? extends GrantedAuthority> authorities){
@@ -26,6 +28,7 @@ public class UserDetailsImpl implements UserDetails {
         this.id = user.getId();
         this.email  = user.getEmail();
         this.password = user.getPassword();
+        this.active = user.isActive();
         this.authorities = authorities;
     }
 
@@ -65,7 +68,8 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        // Deactivated accounts (User.active = false) are rejected at login with DisabledException.
+        return active;
     }
 
     @Override

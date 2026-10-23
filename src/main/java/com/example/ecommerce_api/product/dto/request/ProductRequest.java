@@ -26,7 +26,7 @@ public class ProductRequest {
 
     private String description;
 
-    @Size(max = 500, message = "Image cover must not exceed 500 characters")
+    @Size(max = 2048, message = "Image cover must not exceed 2048 characters")
     private String imageCover;
 
     @NotNull(message = "Sub category is required")

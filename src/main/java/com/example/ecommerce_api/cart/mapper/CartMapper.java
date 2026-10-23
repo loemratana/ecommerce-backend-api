@@ -5,22 +5,16 @@ import com.example.ecommerce_api.cart.dto.response.CartItemResponse;
 import com.example.ecommerce_api.cart.dto.response.CartResponse;
 import com.example.ecommerce_api.cart.entity.Cart;
 import com.example.ecommerce_api.cart.entity.CartItem;
-import com.example.ecommerce_api.user.entity.User;
+import com.example.ecommerce_api.product.entity.Product;
+import com.example.ecommerce_api.product.entity.ProductVariants;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
 public class CartMapper {
-
-    public Cart toEntity(User user) {
-        Cart cart = new Cart();
-        cart.setUser(user);
-        return cart;
-    }
 
     public CartResponse toResponse(Cart cart) {
         List<CartItemResponse> itemResponses = cart.getItems() == null
@@ -38,20 +32,24 @@ public class CartMapper {
         );
     }
 
-    private CartItemResponse toItemResponse(CartItem item) {
-        BigDecimal price = item.getPrice();
-        Integer quantity = item.getQuantity();
-        BigDecimal lineTotal = (price != null && quantity != null)
-                ? price.multiply(BigDecimal.valueOf(quantity))
-                : null;
+    private CartItemResponse toItemResponse(CartItem item)
+    {
+        ProductVariants variant = item.getProductVariants();
+        Product product = variant !=null ? variant.getProduct() :null;
 
         return CartItemResponse.builder()
                 .id(item.getId())
-                .productId(item.getProduct() != null ? item.getProduct().getId() : null)
-                .productName(item.getProduct() != null ? item.getProduct().getTitle() : null)
-                .quantity(quantity)
-                .price(price)
-                .lineTotal(lineTotal)
+                .productId(product !=null? product.getId():null)
+                .productName(product !=null ?product.getTitle() :null)
+                .productVariantId(variant != null ? variant.getId() : null)
+                .sku(variant != null ? variant.getSku() : null)
+                .color(variant != null ? variant.getColor() : null)
+                .sizeName(variant != null && variant.getSize() != null ? variant.getSize().getName() : null)
+                .imageUrl(product != null ? product.imageFor(variant.getColor()) : null)
+                .available(variant != null && variant.isActive() && product != null && product.isActive())
+                .quantity(item.getQuantity())
+                .price(item.getPrice())
+                .lineTotal(item.getSubtotal())
                 .build();
     }
 

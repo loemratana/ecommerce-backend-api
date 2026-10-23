@@ -13,6 +13,7 @@ public class SubCategoryResponse {
     private Long id;
     private String name;
     private String slug;
+    private String image;
 
     private Long categoryId;
     private String categoryName;

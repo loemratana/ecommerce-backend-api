@@ -25,8 +25,12 @@ public class ProductImage {
     private Long id;
 
 
-    @Column(name = "image_url", nullable = false, length = 500)
+    @Column(name = "image_url", nullable = false, length = 2048)
     private String imageUrl;
+
+    /** Variant color this image shows; null = general image shown for every color. */
+    @Column(length = 50)
+    private String color;
 
     @Column(name = "sort_order", nullable = false)
     private int sortOrder = 0;

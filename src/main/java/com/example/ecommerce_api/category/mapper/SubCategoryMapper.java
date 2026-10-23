@@ -20,6 +20,7 @@ public class SubCategoryMapper {
         SubCategory subCategory = new SubCategory();
         subCategory.setName(request.getName());
         subCategory.setSlug(request.getSlug());
+        subCategory.setImage(request.getImage());
         return subCategory;
     }
 
@@ -33,6 +34,10 @@ public class SubCategoryMapper {
         }
         if (request.getSlug() != null) {
             subCategory.setSlug(request.getSlug());
+        }
+        // "" clears the image; null leaves it unchanged
+        if (request.getImage() != null) {
+            subCategory.setImage(request.getImage().isBlank() ? null : request.getImage());
         }
         return subCategory;
     }
@@ -49,6 +54,7 @@ public class SubCategoryMapper {
         response.setId(subCategory.getId());
         response.setName(subCategory.getName());
         response.setSlug(subCategory.getSlug());
+        response.setImage(subCategory.getImage());
 
         if (category != null) {
             response.setCategory(
@@ -73,6 +79,7 @@ public class SubCategoryMapper {
 
     public CategorySummaryResponse toCategorySummary(Category category) {
         return CategorySummaryResponse.builder()
+                .id(category.getId())
                 .name(category.getName())
                 .slug(category.getSlug())
                 .build();
@@ -93,6 +100,7 @@ public class SubCategoryMapper {
                 .id(subCategory.getId())
                 .name(subCategory.getName())
                 .slug(subCategory.getSlug())
+                .image(subCategory.getImage())
                 .categoryId(subCategory.getCategory() != null ? subCategory.getCategory().getId() : null)
                 .categoryName(subCategory.getCategory() != null ? subCategory.getCategory().getName() : null)
                 .createdAt(subCategory.getCreatedAt())

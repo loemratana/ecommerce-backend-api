@@ -70,21 +70,18 @@ public class Cart {
         item.setCart(this);
     }
 
-    public void removeItem(CartItem item) {
-       for (CartItem cartItem :items)
-       {
-           item.setCart(null);
 
-       }
-       items.clear();
-       recalculateTotalPrice();
+    public void removeItem(CartItem item) {
+        items.remove(item);
+        item.setCart(null);
+        recalculateTotalPrice();
     }
-    public void removeItem()
+
+    public void clearItems()
     {
-        for (CartItem item :items)
-        {
-            removeItem(item);
-        }
+        items.forEach(item -> item.setCart(null));
+        items.clear();
+        recalculateTotalPrice();
     }
 
     public void recalculateTotalPrice()

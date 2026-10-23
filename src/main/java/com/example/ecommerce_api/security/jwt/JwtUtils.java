@@ -6,7 +6,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.Getter;
+import com.example.ecommerce_api.settings.service.SettingsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,19 +19,21 @@ import java.util.Optional;
 
 
 @Component
-@Getter
 public class JwtUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
     private final SecretKey key;
-    private final long accessTokenTtlSeconds;
+    private final SettingsService settingsService;
 
-    public JwtUtils(
-            @Value("${jwt.secret}") String jwtSecret,
-            @Value("${jwt.access-token-ttl-seconds}") long accessTokenTtlSeconds) {
+    public JwtUtils(@Value("${jwt.secret}") String jwtSecret, SettingsService settingsService) {
         this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
-        this.accessTokenTtlSeconds = accessTokenTtlSeconds;
+        this.settingsService = settingsService;
+    }
+
+    /** Set by admins in the dashboard (Settings / Security); only applies to newly issued tokens. */
+    public long getAccessTokenTtlSeconds() {
+        return settingsService.get().getSecurity().getAccessTokenTtlMinutes() * 60L;
     }
 
     public String generateAccessToken(String subjectEmail) {
@@ -39,7 +41,7 @@ public class JwtUtils {
         return Jwts.builder()
                 .subject(subjectEmail)
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusSeconds(accessTokenTtlSeconds)))
+                .expiration(Date.from(now.plusSeconds(getAccessTokenTtlSeconds())))
                 .signWith(key)
                 .compact();
     }

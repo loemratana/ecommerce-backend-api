@@ -2,6 +2,7 @@ package com.example.ecommerce_api.user.mapper;
 
 
 import com.example.ecommerce_api.user.dto.request.UpdateProfileRequest;
+import com.example.ecommerce_api.user.dto.request.UpdateUserRequest;
 import com.example.ecommerce_api.user.dto.request.UserRequest;
 import com.example.ecommerce_api.user.dto.response.UserResponse;
 import com.example.ecommerce_api.user.entity.User;
@@ -31,7 +32,7 @@ public class UserMapper {
         return user;
     }
 
-    public User updateEntity(User user, UserRequest request) {
+    public User updateEntity(User user, UpdateUserRequest request) {
         if (request == null) {
             return user;
         }

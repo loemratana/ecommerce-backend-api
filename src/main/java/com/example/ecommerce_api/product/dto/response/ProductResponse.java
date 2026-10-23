@@ -1,6 +1,7 @@
 package com.example.ecommerce_api.product.dto.response;
 
 
+import com.example.ecommerce_api.Enum.CatalogStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -13,6 +14,7 @@ import java.util.List;
 public class ProductResponse {
 
     private Long id;
+    private CatalogStatus status;
 
     private String title;
 
