@@ -3,7 +3,9 @@ package com.example.ecommerce_api.inventory.mapper;
 
 import com.example.ecommerce_api.Enum.InventoryStatus;
 import com.example.ecommerce_api.inventory.dto.InventoryResponse;
+import com.example.ecommerce_api.inventory.dto.InventoryTransactionResponse;
 import com.example.ecommerce_api.inventory.entity.Inventory;
+import com.example.ecommerce_api.inventory.entity.InventoryTransaction;
 import com.example.ecommerce_api.product.entity.ProductVariants;
 import com.example.ecommerce_api.product.mapper.ProductMapper;
 import com.example.ecommerce_api.product.mapper.ProductVariantMapper;
@@ -16,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InventoryMapper {
 
-    private static final int LOW_STOCK_THRESHOLD = 10;
+    public static final int LOW_STOCK_THRESHOLD = 10;
 
     private final ProductMapper productMapper;
 
@@ -56,6 +58,25 @@ public class InventoryMapper {
 
     public List<InventoryResponse> toInventoryResponse(List<Inventory> inventories) {
         return inventories.stream().map(this::toInventoryResponse).toList();
+    }
+
+    public InventoryTransactionResponse toTransactionResponse(InventoryTransaction transaction) {
+        if (transaction == null) {
+            return null;
+        }
+        return InventoryTransactionResponse.builder()
+                .id(transaction.getId())
+                .type(transaction.getType())
+                .quantityChange(transaction.getQuantityChange())
+                .referenceType(transaction.getReferenceType())
+                .referenceId(transaction.getReferenceId())
+                .note(transaction.getNote())
+                .createdAt(transaction.getCreatedAt())
+                .build();
+    }
+
+    public List<InventoryTransactionResponse> toTransactionResponse(List<InventoryTransaction> transactions) {
+        return transactions.stream().map(this::toTransactionResponse).toList();
     }
 
     private InventoryStatus toStatus(int availableQuantity) {

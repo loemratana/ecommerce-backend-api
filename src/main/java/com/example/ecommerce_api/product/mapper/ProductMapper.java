@@ -39,6 +39,10 @@ public class ProductMapper {
 
     public List<ProductSummaryResponse> toProductSummary(List<Product> products) {
 
+        if (products ==null)
+        {
+            return null;
+        }
         return  products.stream().map(
                 product -> ProductSummaryResponse.builder()
                         .id(product.getId())
@@ -67,6 +71,7 @@ public class ProductMapper {
 
         return ProductResponse.builder()
                 .id(product.getId())
+                .status(product.getStatus())
                 .title(product.getTitle())
                 .slug(product.getSlug())
                 .description(product.getDescription())
@@ -75,11 +80,6 @@ public class ProductMapper {
                 .ratingsQuantity(product.getRatingsQuantity())
                 .subCategory(toSubCategory(product.getSubCategory()))
                 .brand(toBrand(product.getBrand()))
-                .variants(mapToVariant(product.getVariants()))
-                .variants(mapToVariant(product.getVariants()))
-                .variants(mapToVariant(product.getVariants()))
-                .variants(mapToVariant(product.getVariants()))
-                .variants(mapToVariant(product.getVariants()))
                 .variants(mapToVariant(product.getVariants()))
                 .images(toImageResponses(product.getImages()))
                 .createdAt(product.getCreatedAt())
@@ -92,7 +92,11 @@ public class ProductMapper {
 
 
     private List<ProductVariantResponse> mapToVariant(List<ProductVariants> productVariants) {
-        return productVariants.stream().map(productVariantMapper::toResponse).toList();
+        // archived variants stay in the database for order/stock history but aren't sellable
+        return productVariants.stream()
+                .filter(ProductVariants::isActive)
+                .map(productVariantMapper::toResponse)
+                .toList();
     }
     public List<ProductResponse> toResponse(List<Product> products) {
         return products.stream().map(this::toResponse).toList();
@@ -108,6 +112,9 @@ public class ProductMapper {
 
     private BrandResponse toBrand(Brand brand)
     {
+        if (brand == null) {
+            return null;   // brand is optional on a product
+        }
         return BrandResponse.builder()
                 .brandId(brand.getId())
                 .brandName(brand.getName())

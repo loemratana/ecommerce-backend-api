@@ -9,9 +9,11 @@ import com.example.ecommerce_api.user.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/users/me")
@@ -35,6 +37,16 @@ public class UserMeController {
 
         UserResponse response = userService.updateProfile(principal.getId(), request);
         return ResponseEntity.ok(ApiResponse.success(response, "Profile updated successfully"));
+    }
+
+    @Operation(description = "Upload a new avatar for the authenticated user (PNG, JPG, WEBP or GIF, max 10MB)")
+    @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<UserResponse>> uploadAvatar(
+            @AuthenticationPrincipal UserDetailsImpl principal,
+            @RequestParam("file") MultipartFile file) {
+
+        UserResponse response = userService.updateAvatar(principal.getId(), file);
+        return ResponseEntity.ok(ApiResponse.success(response, "Avatar updated successfully"));
     }
 
     @Operation(description = "Change the authenticated user's password")

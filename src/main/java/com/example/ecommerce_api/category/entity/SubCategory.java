@@ -39,6 +39,9 @@ public class SubCategory {
     @Column(nullable = false, unique = true, length = 255)
     private String slug;
 
+    @Column(length = 2048)
+    private String image;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;

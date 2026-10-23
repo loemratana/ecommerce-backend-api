@@ -26,6 +26,40 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     boolean existsByProductVariant_Id(Long productVariantId);
 
     /**
+     * Filtered list for the admin table. search = '' disables the text filter;
+     * minAvailable/maxAvailable bound the available stock (quantity - reserved).
+     */
+    @EntityGraph(attributePaths = {"productVariant", "productVariant.product", "productVariant.size"})
+    @Query(value = "select i from Inventory i join i.productVariant v join v.product p " +
+            "where (:search = '' or lower(p.title) like concat('%', :search, '%') " +
+            "       or lower(v.sku) like concat('%', :search, '%') " +
+            "       or lower(coalesce(v.color, '')) like concat('%', :search, '%')) " +
+            "and (i.quantity - i.reservedQuantity) between :minAvailable and :maxAvailable",
+            countQuery = "select count(i) from Inventory i join i.productVariant v join v.product p " +
+                    "where (:search = '' or lower(p.title) like concat('%', :search, '%') " +
+                    "       or lower(v.sku) like concat('%', :search, '%') " +
+                    "       or lower(coalesce(v.color, '')) like concat('%', :search, '%')) " +
+                    "and (i.quantity - i.reservedQuantity) between :minAvailable and :maxAvailable")
+    Page<Inventory> search(@Param("search") String search,
+                           @Param("minAvailable") int minAvailable,
+                           @Param("maxAvailable") int maxAvailable,
+                           Pageable pageable);
+
+    @Query("select count(i) from Inventory i where (i.quantity - i.reservedQuantity) between :min and :max")
+    long countByAvailableBetween(@Param("min") int min, @Param("max") int max);
+
+    @Query("select coalesce(sum(i.quantity), 0) from Inventory i")
+    long sumQuantity();
+
+    @Query("select coalesce(sum(i.reservedQuantity), 0) from Inventory i")
+    long sumReservedQuantity();
+
+    /** Records whose available stock (quantity - reserved) is at or below the threshold. */
+    @EntityGraph(attributePaths = {"productVariant", "productVariant.product", "productVariant.size"})
+    @Query("select i from Inventory i where (i.quantity - i.reservedQuantity) <= :threshold")
+    Page<Inventory> findLowStock(@Param("threshold") int threshold, Pageable pageable);
+
+    /**
      * Row-locks the inventory record for the duration of the transaction, so concurrent
      * reserve/release/sale calls for the same variant serialize instead of racing on
      * quantity/reservedQuantity.

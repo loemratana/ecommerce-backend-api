@@ -1,12 +1,11 @@
 package com.example.ecommerce_api.product.entity;
 
 
+import com.example.ecommerce_api.Enum.CatalogStatus;
 import com.example.ecommerce_api.brand.entity.Brand;
-import com.example.ecommerce_api.cart.entity.CartItem;
 import com.example.ecommerce_api.category.entity.SubCategory;
 import com.example.ecommerce_api.review.entity.Review;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +17,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Getter
@@ -47,8 +47,12 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "image_cover", length = 500)
+    @Column(name = "image_cover", length = 2048)
     private String imageCover;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private CatalogStatus status = CatalogStatus.ACTIVE;
 
     @Column(name = "ratings_average", nullable = false, precision = 3, scale = 2)
     private BigDecimal ratingsAverage = BigDecimal.ZERO;
@@ -58,9 +62,6 @@ public class Product {
 
 
 
-    @Column(name = "stock_quantity")
-    @Positive
-    private Integer stockQuantity;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sub_category_id", nullable = false)
@@ -81,8 +82,6 @@ public class Product {
     private Brand brand;
 
 
-    @OneToMany(mappedBy = "product" , cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CartItem> cartItems = new ArrayList<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 20)
@@ -97,4 +96,31 @@ public class Product {
     private LocalDateTime updatedAt;
 
 
+
+    /**
+     * Best image to show for a chosen variant color: the first image tagged with that
+     * color, else the cover, else the first general image.
+     */
+    public String imageFor(String color) {
+        Comparator<ProductImage> bySortOrder = Comparator.comparingInt(ProductImage::getSortOrder);
+        if (color != null && images != null) {
+            String wanted = color.trim();
+            String match = images.stream()
+                    .filter(image -> image.getColor() != null && image.getColor().trim().equalsIgnoreCase(wanted))
+                    .min(bySortOrder)
+                    .map(ProductImage::getImageUrl)
+                    .orElse(null);
+            if (match != null) return match;
+        }
+        if (imageCover != null) return imageCover;
+        return images == null ? null : images.stream()
+                .filter(image -> image.getColor() == null)
+                .min(bySortOrder)
+                .map(ProductImage::getImageUrl)
+                .orElse(null);
+    }
+
+    public boolean isActive() {
+        return status == CatalogStatus.ACTIVE;
+    }
 }

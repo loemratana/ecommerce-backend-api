@@ -32,6 +32,10 @@ public class ProductVariantsRequest {
     @DecimalMin(value = "0.0", inclusive = true, message = "Discount price cannot be negative")
     private BigDecimal priceAfterDiscount;
 
-    @Min(value = 0, message = "Sold quantity cannot be negative")
-    private Integer soldQuantity = 0;
+    /**
+     * Opening stock for a NEW variant (ignored for existing ones; change their stock from the
+     * inventory page so every change is logged).
+     */
+    @Min(value = 0, message = "Initial stock cannot be negative")
+    private Integer initialStock;
 }

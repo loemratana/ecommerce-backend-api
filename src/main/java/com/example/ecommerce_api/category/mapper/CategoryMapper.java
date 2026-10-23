@@ -4,9 +4,12 @@ package com.example.ecommerce_api.category.mapper;
 import com.example.ecommerce_api.category.dto.request.CategoryRequest;
 import com.example.ecommerce_api.category.dto.response.CategoryDetailResponse;
 import com.example.ecommerce_api.category.dto.response.CategoryResponse;
+import com.example.ecommerce_api.category.dto.response.CategorySummaryResponse;
 import com.example.ecommerce_api.category.dto.response.SubCategoryDetailResponse;
 import com.example.ecommerce_api.category.entity.Category;
 import com.example.ecommerce_api.category.entity.SubCategory;
+import com.example.ecommerce_api.product.dto.response.ProductSummaryResponse;
+import com.example.ecommerce_api.product.entity.Product;
 import com.example.ecommerce_api.product.mapper.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -76,6 +79,40 @@ public class CategoryMapper {
         return SubCategoryDetailResponse.builder()
                 .id(subCategory.getId())
                 .name(subCategory.getName())
+                .category(
+                        subCategory.getCategory() != null
+                                ? toCategorySummary(subCategory.getCategory())
+                                : null
+                )
+                .products(
+                        subCategory.getProducts() != null
+                                ? subCategory.getProducts()
+                                .stream()
+                                .map(this::toProductSummary)
+                                .toList()
+                                : List.of()
+                )
                 .build();
     }
+
+    private ProductSummaryResponse toProductSummary(Product product) {
+
+        return ProductSummaryResponse.builder()
+                .id(product.getId())
+                .name(product.getTitle())
+                .slug(product.getSlug())
+                .imageUrl(product.getImageCover())
+                .build();
+    }
+
+
+    private CategorySummaryResponse toCategorySummary(Category category) {
+
+        return CategorySummaryResponse.builder()
+                .id(category.getId())
+                .name(category.getName())
+                .slug(category.getSlug())
+                .build();
+    }
+
 }

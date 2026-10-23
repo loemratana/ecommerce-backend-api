@@ -47,8 +47,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 jwtUtils.extractValidSubject(jwt).ifPresentOrElse(
                         username -> {
 
-                            logger.info("JWT subject: {}", username);
-
                             UserDetails userDetails =
                                     userDetailsService.loadUserByUsername(username);
 
@@ -73,12 +71,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     .getContext()
                                     .setAuthentication(authenticationToken);
 
-                            logger.info(
-                                    "Authenticated: {}",
-                                    SecurityContextHolder
-                                            .getContext()
-                                            .getAuthentication()
-                            );
+//                            logger.info(
+//                                    "Authenticated: {}",
+//                                    SecurityContextHolder
+//                                            .getContext()
+//                                            .getAuthentication()
+//                            );
                         },
                         () -> logger.warn("JWT is invalid or subject could not be extracted")
                 );

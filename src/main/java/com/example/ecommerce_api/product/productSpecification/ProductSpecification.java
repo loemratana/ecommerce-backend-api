@@ -1,5 +1,6 @@
 package com.example.ecommerce_api.product.productSpecification;
 
+import com.example.ecommerce_api.Enum.CatalogStatus;
 import com.example.ecommerce_api.product.entity.Product;
 import com.example.ecommerce_api.product.entity.ProductVariants;
 import jakarta.persistence.criteria.Join;
@@ -16,22 +17,35 @@ public class ProductSpecification {
     private ProductSpecification() {
     }
 
-    public static Specification<Product> filter(String title,
+
+    public static Specification<Product> filter(CatalogStatus status,
+                                                String title,
                                                 Long brandId,
                                                 Long subCategoryId,
+                                                Long categoryId,
                                                 BigDecimal minPrice,
                                                 BigDecimal maxPrice,
                                                 BigDecimal minRating) {
         List<Specification<Product>> specifications = Stream.of(
+                hasStatus(status),
                 titleContains(title),
                 hasBrand(brandId),
                 hasSubCategory(subCategoryId),
+                hasCategory(categoryId),
                 priceGreaterThanOrEqualTo(minPrice),
                 priceLessThanOrEqualTo(maxPrice),
                 ratingGreaterThanOrEqualTo(minRating)
         ).filter(Objects::nonNull).toList();
 
         return specifications.isEmpty() ? Specification.unrestricted() : Specification.allOf(specifications);
+    }
+
+    /** null = any status (admin "All" view). */
+    public static Specification<Product> hasStatus(CatalogStatus status) {
+        if (status == null) {
+            return null;
+        }
+        return (root, query, cb) -> cb.equal(root.get("status"), status);
     }
 
     public static Specification<Product> titleContains(String title) {
@@ -60,6 +74,14 @@ public class ProductSpecification {
         }
         return (root, query, cb) ->
                 cb.equal(root.get("subCategory").get("id"), subCategoryId);
+    }
+
+    public static Specification<Product> hasCategory(Long categoryId) {
+        if (categoryId == null) {
+            return null;
+        }
+        return (root, query, cb) ->
+                cb.equal(root.get("subCategory").get("category").get("id"), categoryId);
     }
 
     public static Specification<Product> priceGreaterThanOrEqualTo(BigDecimal minPrice) {
@@ -93,6 +115,6 @@ public class ProductSpecification {
             return null;
         }
         return (root, query, cb) ->
-                cb.greaterThanOrEqualTo(root.get("rating"), minRating);
+                cb.greaterThanOrEqualTo(root.get("ratingsAverage"), minRating);
     }
 }

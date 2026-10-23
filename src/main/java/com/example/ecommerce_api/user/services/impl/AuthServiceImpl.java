@@ -67,6 +67,7 @@ public class AuthServiceImpl implements AuthService {
 
 
     @Override
+    @Transactional
     public UserResponse register(RegisterRequest registerRequest) {
 
         if (registerRequest.getEmail() !=null && userRepository.existsByEmailIgnoreCase(registerRequest.getEmail())) {

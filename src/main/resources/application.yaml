@@ -1,6 +1,11 @@
 spring:
   application:
     name: ecommerce-api
+  config:
+    # Loads KEY=value pairs from .env in the working directory (the project root when run from
+    # IntelliJ or Gradle). Real environment variables still win over these. Optional: the app
+    # starts without the file. Note an EMPTY value here overrides a ${KEY:default} in this yaml.
+    import: optional:file:.env[.properties]
   datasource:
     username: admin-ecommerce
     password: ecommerce!120@897
@@ -37,16 +42,50 @@ cloudinary:
 
 
 
+# The app.order.*, app.invoice.*, app.localization.* and jwt.access-token-ttl-seconds values
+# below are only starting values: they fill the store_settings row the first time the app runs,
+# after which admins change them in the dashboard (Settings).
 app:
   seed:
     enabled: ${APP_SEED_ENABLED:false}
+  order:
+    tax-rate: ${APP_ORDER_TAX_RATE:0.00}          # 0.10 = 10% on (subtotal - discount)
+    shipping-fee: ${APP_ORDER_SHIPPING_FEE:0.00}
+    pending-timeout: ${APP_ORDER_PENDING_TIMEOUT:PT30M}         # unpaid orders are cancelled after this, freeing their stock
+    expiry-check-interval: ${APP_ORDER_EXPIRY_CHECK_INTERVAL:PT1M}
+    return-window: ${APP_ORDER_RETURN_WINDOW:P30D}               # customers can request a return this long after delivery
+  invoice:                                                        # seller details printed on invoice PDFs
+    company-name: ${APP_INVOICE_COMPANY_NAME:E-Commerce Store}
+    company-address: ${APP_INVOICE_COMPANY_ADDRESS:}
+    company-email: ${APP_INVOICE_COMPANY_EMAIL:}
+    currency: ${APP_INVOICE_CURRENCY:USD}
+  localization:
+    timezone: ${APP_TIMEZONE:Asia/Phnom_Penh}
+  minio:
+    url: ${MINIO_URL}
+    access:
+      name: ${MINIO_ACCESS_KEY}
+      secret: ${MINIO_SECRET_KEY}
 
+  stripe:
+    # Empty = Stripe is off: the gateway isn't created and checkout only offers the other methods
+    secret-key: ${STRIPE_SECRET_KEY:}
+    # Customers come back here after paying: /checkout/success and /checkout/cancel
+    storefront-url: ${STOREFRONT_URL:http://localhost:3000}
 
 server:
   port: 8083
+  address: 0.0.0.0
+  # Behind a proxy (e.g. a Cloudflare tunnel) use its X-Forwarded-Proto/Host, so generated URLs
+  # such as Swagger's server url are https instead of http
+  forward-headers-strategy: framework
 logging:
   level:
     root: INFO                                # General logging level for the application
     org.springframework.data.jpa.repository: DEBUG  # Log JPA repository method calls
-    org.hibernate.SQL: DEBUG                   # Log SQL statements executed by Hibernate
+#    org.hibernate.SQL: DEBUG                   # Log SQL statements executed by Hibernate
     org.hibernate.type.descriptor.sql: TRACE   # Log SQL parameter binding
+
+springdoc:
+  api-docs:
+    version: openapi_3_0   # springdoc 3.x defaults to 3.1, which fails to clone validated numeric param schemas

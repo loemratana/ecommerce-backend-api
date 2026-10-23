@@ -11,5 +11,8 @@ public class ProductImageResponse {
 
     private String imageUrl;
 
+    /** Null = general image shown for every color. */
+    private String color;
+
     private Integer sortOrder;
 }

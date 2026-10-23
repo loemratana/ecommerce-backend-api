@@ -32,8 +32,7 @@ public class CloudinaryServiceImpl implements CloudinaryService {
         }
         catch (Exception e)
         {
-            e.printStackTrace();
-            return null;
+            throw new IllegalStateException("Image upload failed: " + e.getMessage(), e);
         }
     }
 }

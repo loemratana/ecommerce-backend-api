@@ -2,8 +2,10 @@ package com.example.ecommerce_api.user.services.impl;
 
 import com.example.ecommerce_api.common.exception.ResourceNotFoundException;
 import com.example.ecommerce_api.common.exception.UserDuplicationException;
+import com.example.ecommerce_api.common.response.PageResponse;
 import com.example.ecommerce_api.user.dto.request.UpdatePasswordRequest;
 import com.example.ecommerce_api.user.dto.request.UpdateProfileRequest;
+import com.example.ecommerce_api.user.dto.request.UpdateUserRequest;
 import com.example.ecommerce_api.user.dto.request.UserRequest;
 import com.example.ecommerce_api.user.dto.response.UserResponse;
 import com.example.ecommerce_api.user.entity.Address;
@@ -11,12 +13,21 @@ import com.example.ecommerce_api.user.entity.User;
 import com.example.ecommerce_api.user.mapper.AddressMapper;
 import com.example.ecommerce_api.user.mapper.UserMapper;
 import com.example.ecommerce_api.user.repository.UserRepository;
+import com.example.ecommerce_api.user.services.RefreshTokenService;
 import com.example.ecommerce_api.user.services.UserService;
 import com.example.ecommerce_api.common.exception.BusinessException;
+import com.example.ecommerce_api.common.exception.BadRequestException;
+import com.example.ecommerce_api.product.sevices.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.Set;
 
 
 @Slf4j
@@ -24,11 +35,15 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+    // SVG is excluded on purpose: it can carry scripts and avatars are shown to other users
+    private static final Set<String> AVATAR_CONTENT_TYPES = Set.of("image/png", "image/jpeg", "image/webp", "image/gif");
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final AddressMapper addressMapper;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
+    private final CloudinaryService cloudinaryService;
 
     @Override
     public UserResponse createUser(UserRequest userRequest) {
@@ -59,7 +74,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse updateUser(Long id ,UserRequest userRequest) {
+    public UserResponse updateUser(Long id, UpdateUserRequest userRequest) {
 
         User user = userRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("User not found"));
 
@@ -99,6 +114,26 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserResponse updateAvatar(Long id, MultipartFile file) {
+
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException("Image file is required");
+        }
+        if (file.getContentType() == null || !AVATAR_CONTENT_TYPES.contains(file.getContentType())) {
+            throw new BadRequestException("Avatar must be a PNG, JPG, WEBP or GIF image");
+        }
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setProfileImage(cloudinaryService.uploadFile(file, "avatars"));
+
+        User savedUser = userRepository.save(user);
+        log.info("Updated avatar for user {}", id);
+        return userMapper.toResponse(savedUser);
+    }
+
+    @Override
     public UserResponse updatePassword(Long id, UpdatePasswordRequest userRequest) {
 
         User user = userRepository.findById(id)
@@ -118,6 +153,27 @@ public class UserServiceImpl implements UserService {
         User savedUser = userRepository.save(user);
         log.info("Password updated for user {}", id);
         return userMapper.toResponse(savedUser);
+    }
+
+    @Override
+    public PageResponse<UserResponse> getAllUser(Boolean active,
+                                                 String search, Pageable pageable) {
+
+        String searchPattern = "%" +
+                (search == null ? "" : search.trim().toLowerCase()) +
+                "%";
+
+        Page<User> userPage = userRepository.searchCustomers(
+                active,
+                searchPattern,
+                pageable
+        );
+
+        Page<UserResponse> responsePage = userPage.map(
+                userMapper::toResponse
+        );
+        log.info("Search use with active {} search {}",active,search);
+        return new PageResponse<>(responsePage);
     }
 
     @Override
@@ -149,6 +205,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public PageResponse<UserResponse> getAllUsers(Pageable pageable) {
+
+        Page<User> response = userRepository.findAll(pageable);
+
+        Page<UserResponse> user = response.map(userMapper::toResponse);
+        return new PageResponse<UserResponse>(user);
+    }
+
+    @Override
     public void deactivateUser(Long id) {
 
         User user = userRepository.findById(id)
@@ -156,6 +221,8 @@ public class UserServiceImpl implements UserService {
 
         user.setActive(false);
         userRepository.save(user);
+        // Sign them out everywhere; otherwise other devices keep refreshing their tokens.
+        refreshTokenService.revokeAllForUser(id);
         log.info("Deactivated user {}", id);
     }
 }

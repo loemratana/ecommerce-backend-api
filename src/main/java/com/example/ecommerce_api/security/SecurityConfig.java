@@ -73,10 +73,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/categories/**", "/api/v1/sub-categories/**").permitAll()
                         .requestMatchers("/api/v1/sub-categories/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers("/api/v1/categories/**").hasAnyRole("CUSTOMER", "ADMIN")
-                        .requestMatchers("/api/v1/product/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/product/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/settings/public").permitAll()
+                        .requestMatchers("/api/v1/product/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/images/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/review/**").authenticated()
                         .requestMatchers("/api/v1/cart/**").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers("/api/v1/wishlist/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers("/api/v1/inventory/**").hasAnyRole("ADMIN")
+                        .requestMatchers("/api/v1/customers/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/users/me/**").authenticated()
                         .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/permissions/**").hasRole("ADMIN")
@@ -115,9 +120,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("*"));
+        configuration.setAllowedOrigins(List.of("*","https://pack-adjustable-wax-tions.trycloudflare.com/"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        // Lets the dashboard read the file name of Excel exports and invoice PDFs
+        configuration.setExposedHeaders(List.of("Content-Disposition"));
         configuration.setAllowCredentials(false);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 

@@ -19,4 +19,6 @@ public class ProductStatsResponse {
 
     private long lowStock;
     private long outOfStock;
+
+    private long archivedProducts;
 }
