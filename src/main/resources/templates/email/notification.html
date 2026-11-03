@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<!-- Generic notification (e.g. the admin "send test" message). Variables: title, body, storeName. -->
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{email/layout :: layout(${title}, ~{::content})}" lang="en">
+<body>
+<div th:fragment="content">
+    <p style="margin:0;font-size:14px;line-height:1.6;white-space:pre-line;" th:text="${body}">Message</p>
+</div>
+</body>
+</html>

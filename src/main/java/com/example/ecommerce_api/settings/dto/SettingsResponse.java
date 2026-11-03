@@ -14,6 +14,8 @@ public class SettingsResponse {
 
     private final Store store;
     private final Orders orders;
+    private final Inventory inventory;
+    private final Notifications notifications;
     private final Localization localization;
     private final Security security;
     private final LocalDateTime updatedAt;
@@ -40,6 +42,19 @@ public class SettingsResponse {
 
     @Getter
     @AllArgsConstructor
+    public static class Inventory {
+        private final int lowStockThreshold;
+    }
+
+    /** Store-wide notification switches; where admin alerts go is managed as notification destinations. */
+    @Getter
+    @AllArgsConstructor
+    public static class Notifications {
+        private final boolean customerOrderEmail;
+    }
+
+    @Getter
+    @AllArgsConstructor
     public static class Localization {
         private final String currency;
         private final String timezone;
@@ -55,6 +70,8 @@ public class SettingsResponse {
         return new SettingsResponse(
                 new Store(s.getStoreName(), s.getStoreEmail(), s.getStorePhone(), s.getStoreAddress(), s.getStoreDescription()),
                 new Orders(s.getTaxRate(), s.getShippingFee(), s.getPendingTimeoutMinutes(), s.getReturnWindowDays()),
+                new Inventory(s.getLowStockThreshold()),
+                new Notifications(Boolean.TRUE.equals(s.getCustomerOrderEmail())),
                 new Localization(s.getCurrency(), s.getTimezone()),
                 new Security(s.getAccessTokenTtlMinutes()),
                 s.getUpdatedAt(),

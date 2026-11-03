@@ -1,6 +1,7 @@
 package com.example.ecommerce_api.product.sevices;
 
 import com.example.ecommerce_api.Enum.CatalogStatus;
+import com.example.ecommerce_api.Enum.ProductType;
 import com.example.ecommerce_api.product.dto.request.ProductRequest;
 import com.example.ecommerce_api.product.dto.response.ProductResponse;
 import com.example.ecommerce_api.product.dto.response.ProductStatsResponse;
@@ -21,9 +22,13 @@ public interface ProductService {
     List<ProductSummaryResponse> getNewArrivals(int days , int limit);
     List<ProductSummaryResponse> getBestSellers(int days, int limit);
 
+    /** Products to show under "You may also like" on a product page. */
+    List<ProductResponse> getRelated(Long id, int limit);
+
     /** status null = every status. */
     Page<ProductResponse> getAll(
             CatalogStatus status,
+            ProductType type,
             String title,
             Long brandId,
             Long subCategoryId,

@@ -4,6 +4,7 @@ package com.example.ecommerce_api.order.entity;
 import com.example.ecommerce_api.common.exception.BadRequestException;
 import com.example.ecommerce_api.product.entity.ProductVariants;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -51,6 +52,12 @@ public class OrderItem {
     private BigDecimal price;
 
 
+    @DecimalMin(value = "0.00")
+    @DecimalMax(value = "100.0")
+    @Column(scale = 2, precision = 5)
+    private BigDecimal discountPercent;
+
+
     /** Unit price actually charged (variant sale price, if any). Coupons are applied on the order. */
     @DecimalMin(value = "0.00")
     @Column(precision = 19, scale = 2, nullable = false)
@@ -94,6 +101,8 @@ public class OrderItem {
         this.productVariant = variant;
         this.quantity = quantity;
         this.price = variant.getPrice();
+        // snapshot the discount actually applied (variant's own, else the product-wide one)
+        this.discountPercent  = variant.getEffectiveDiscountPercent();
         this.priceAfterDiscount = variant.getPriceAfterDiscount() != null
                 ? variant.getPriceAfterDiscount()
                 : variant.getPrice();

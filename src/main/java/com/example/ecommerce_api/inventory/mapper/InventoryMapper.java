@@ -9,6 +9,7 @@ import com.example.ecommerce_api.inventory.entity.InventoryTransaction;
 import com.example.ecommerce_api.product.entity.ProductVariants;
 import com.example.ecommerce_api.product.mapper.ProductMapper;
 import com.example.ecommerce_api.product.mapper.ProductVariantMapper;
+import com.example.ecommerce_api.settings.service.SettingsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,11 +19,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InventoryMapper {
 
-    public static final int LOW_STOCK_THRESHOLD = 10;
-
     private final ProductMapper productMapper;
 
     private final ProductVariantMapper productVariantMapper;
+
+    private final SettingsService settingsService;
 
     public InventoryResponse toInventoryResponse(Inventory inventory) {
 
@@ -83,7 +84,7 @@ public class InventoryMapper {
         if (availableQuantity <= 0) {
             return InventoryStatus.OUT_OF_STOCK;
         }
-        if (availableQuantity <= LOW_STOCK_THRESHOLD) {
+        if (availableQuantity <= settingsService.lowStockThreshold()) {
             return InventoryStatus.LOW_STOCK;
         }
         return InventoryStatus.IN_STOCK;

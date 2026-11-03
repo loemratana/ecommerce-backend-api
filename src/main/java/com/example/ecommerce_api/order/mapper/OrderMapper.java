@@ -87,6 +87,7 @@ public class OrderMapper {
                 .color(item.getColor())
                 .sizeName(item.getSizeName())
                 .imageUrl(item.getImageUrl())
+                .discountPercent(item.getDiscountPercent())
                 .quantity(item.getQuantity())
                 .price(item.getPrice())
                 .priceAfterDiscount(item.getPriceAfterDiscount())

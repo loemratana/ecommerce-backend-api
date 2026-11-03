@@ -3,6 +3,9 @@ package com.example.ecommerce_api.product.repository;
 
 import com.example.ecommerce_api.Enum.CatalogStatus;
 import com.example.ecommerce_api.Enum.OrderStatus;
+import com.example.ecommerce_api.Enum.ProductType;
+import com.example.ecommerce_api.category.entity.Category;
+import com.example.ecommerce_api.category.entity.SubCategory;
 import com.example.ecommerce_api.common.response.PageResponse;
 import com.example.ecommerce_api.product.dto.response.ProductSalesProjection;
 import com.example.ecommerce_api.product.dto.response.ProductSummaryResponse;
@@ -61,6 +64,29 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
         order by p.createdAt desc
 """)
     List<Product> findNewArrivals(@Param("since") LocalDateTime since , Pageable pageable);
+
+    /**
+     * In-stock active products in the same category as a product, same sub-category first, then
+     * best rated and newest. Products without a type are always included.
+     */
+    @EntityGraph(attributePaths = {"brand", "subCategory"})
+    @Query("""
+        select p from Product p
+        where p.id <> :id
+          and p.status = com.example.ecommerce_api.Enum.CatalogStatus.ACTIVE
+          and p.subCategory.category = :category
+          and (p.productType is null or p.productType in :types)
+          and exists (select 1 from Inventory i
+                      where i.productVariant.product = p and i.quantity - i.reservedQuantity > 0
+                        and i.productVariant.status = com.example.ecommerce_api.Enum.CatalogStatus.ACTIVE)
+        order by case when p.subCategory = :subCategory then 0 else 1 end,
+                 p.ratingsAverage desc, p.createdAt desc
+""")
+    List<Product> findRelated(@Param("id") Long id,
+                              @Param("subCategory") SubCategory subCategory,
+                              @Param("category") Category category,
+                              @Param("types") Collection<ProductType> types,
+                              Pageable pageable);
 
 
 

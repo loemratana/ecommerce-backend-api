@@ -1,6 +1,7 @@
 package com.example.ecommerce_api.product.productSpecification;
 
 import com.example.ecommerce_api.Enum.CatalogStatus;
+import com.example.ecommerce_api.Enum.ProductType;
 import com.example.ecommerce_api.product.entity.Product;
 import com.example.ecommerce_api.product.entity.ProductVariants;
 import jakarta.persistence.criteria.Join;
@@ -19,6 +20,7 @@ public class ProductSpecification {
 
 
     public static Specification<Product> filter(CatalogStatus status,
+                                                ProductType type,
                                                 String title,
                                                 Long brandId,
                                                 Long subCategoryId,
@@ -28,6 +30,7 @@ public class ProductSpecification {
                                                 BigDecimal minRating) {
         List<Specification<Product>> specifications = Stream.of(
                 hasStatus(status),
+                hasType(type),
                 titleContains(title),
                 hasBrand(brandId),
                 hasSubCategory(subCategoryId),
@@ -46,6 +49,14 @@ public class ProductSpecification {
             return null;
         }
         return (root, query, cb) -> cb.equal(root.get("status"), status);
+    }
+
+    /** null = any type; MEN / WOMEN also match UNISEX products. */
+    public static Specification<Product> hasType(ProductType type) {
+        if (type == null) {
+            return null;
+        }
+        return (root, query, cb) -> root.get("productType").in(type.withUnisex());
     }
 
     public static Specification<Product> titleContains(String title) {

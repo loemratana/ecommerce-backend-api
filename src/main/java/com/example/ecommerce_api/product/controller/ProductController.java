@@ -3,6 +3,7 @@ package com.example.ecommerce_api.product.controller;
 
 import com.example.ecommerce_api.common.exception.BadRequestException;
 import com.example.ecommerce_api.Enum.CatalogStatus;
+import com.example.ecommerce_api.Enum.ProductType;
 import com.example.ecommerce_api.product.dto.request.ProductRequest;
 import com.example.ecommerce_api.product.dto.response.ProductResponse;
 import com.example.ecommerce_api.product.dto.response.ProductStatsResponse;
@@ -73,6 +74,19 @@ public class ProductController {
             @RequestParam(defaultValue = "12") int limit) {
         return ResponseEntity.ok(productService.getNewArrivals(days, limit));
     }
+    @Operation(summary = "Related products",
+            description = "Active, in-stock products from the same category (same sub-category first) and a matching type, excluding the product itself")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Related products found"),
+            @ApiResponse(responseCode = "404", description = "Product not found")
+    })
+    @GetMapping("/{id}/related")
+    public ResponseEntity<List<ProductResponse>> getRelatedProducts(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "8") int limit) {
+        return ResponseEntity.ok(productService.getRelated(id, limit));
+    }
+
     @Operation(summary = "Get product dashboard stats",
             description = "Returns total/active/low-stock/out-of-stock product counts for the admin dashboard")
     @ApiResponses(value = {
@@ -85,7 +99,7 @@ public class ProductController {
     }
 
     @Operation(summary = "List products with filtering and pagination",
-            description = "Retrieve a paginated list of products. Supports filtering by title, brand, subCategory, price range, and minimum rating.")
+            description = "Retrieve a paginated list of products. Supports filtering by type (MEN/WOMEN/UNISEX), title, brand, subCategory, price range, and minimum rating.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successful retrieval")
     })
@@ -93,6 +107,9 @@ public class ProductController {
     public ResponseEntity<Page<ProductResponse>> getAllProducts(
             @Parameter(description = "ACTIVE (default, what the shop shows), ARCHIVED or ALL")
             @RequestParam(defaultValue = "ACTIVE") String status,
+
+            @Parameter(description = "Filter by product type: MEN, WOMEN (both include UNISEX) or UNISEX; omit for all")
+            @RequestParam(required = false) String type,
 
             @Parameter(description = "Filter by product title (partial match, case-insensitive)")
             @RequestParam(required = false) String title,
@@ -119,7 +136,7 @@ public class ProductController {
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         Page<ProductResponse> page = productService.getAll(
-                parseStatus(status), title, brandId, subCategoryId, categoryId, minPrice, maxPrice, minRating, pageable
+                parseStatus(status), parseType(type), title, brandId, subCategoryId, categoryId, minPrice, maxPrice, minRating, pageable
         );
         return ResponseEntity.ok(page);
     }
@@ -155,6 +172,17 @@ public class ProductController {
     public ResponseEntity<Void> restoreProduct(@PathVariable Long id) {
         productService.restore(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private static ProductType parseType(String type) {
+        if (type == null || type.isBlank()) {
+            return null;
+        }
+        try {
+            return ProductType.valueOf(type.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("type must be MEN, WOMEN or UNISEX");
+        }
     }
 
     private static CatalogStatus parseStatus(String status) {

@@ -2,6 +2,7 @@ package com.example.ecommerce_api.product.dto.response;
 
 
 import com.example.ecommerce_api.Enum.CatalogStatus;
+import com.example.ecommerce_api.Enum.ProductType;
 import lombok.Builder;
 import lombok.Data;
 
@@ -16,6 +17,8 @@ public class ProductResponse {
     private Long id;
     private CatalogStatus status;
 
+    private ProductType productType;
+
     private String title;
 
     private String slug;
@@ -23,6 +26,9 @@ public class ProductResponse {
     private String description;
 
     private String imageCover;
+
+    /** Product-wide discount (variants may override it with their own). */
+    private BigDecimal discountPercent;
 
     private BigDecimal ratingsAverage;
 

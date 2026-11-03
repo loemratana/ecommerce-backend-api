@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<!-- NEW_ORDER. Variables: order (OrderResponse), items, currency, storeName, title. -->
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{email/layout :: layout(|New order ${order.orderNumber}|, ~{::content})}" lang="en">
+<body>
+<div th:fragment="content">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;line-height:1.6;margin-bottom:16px;">
+        <tr>
+            <td style="color:#6b7280;width:110px;">Order</td>
+            <td style="font-weight:bold;" th:text="${order.orderNumber}">ORD-20261024-ABCDEF12</td>
+        </tr>
+        <tr th:if="${order.customer != null}">
+            <td style="color:#6b7280;">Customer</td>
+            <td>
+                <span th:text="${order.customer.name}">Customer name</span>
+                <span th:if="${order.customer.email != null}" style="color:#6b7280;"
+                      th:text="'(' + ${order.customer.email} + ')'">(customer@example.com)</span>
+            </td>
+        </tr>
+        <tr th:if="${order.customer != null and order.customer.phone != null}">
+            <td style="color:#6b7280;">Phone</td>
+            <td th:text="${order.customer.phone}">012 345 678</td>
+        </tr>
+        <tr>
+            <td style="color:#6b7280;">Status</td>
+            <td th:text="${order.status}">PENDING</td>
+        </tr>
+    </table>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;border-collapse:collapse;">
+        <tr style="background:#f3f4f6;">
+            <th align="left" style="padding:8px;">Product</th>
+            <th align="right" style="padding:8px;">Qty</th>
+            <th align="right" style="padding:8px;">Total</th>
+        </tr>
+        <tr th:each="item : ${items}" style="border-bottom:1px solid #e5e7eb;">
+            <td style="padding:8px;">
+                <span th:text="${item.productName}">Basic Tee</span><br/>
+                <span style="font-size:12px;color:#6b7280;"
+                      th:text="${item.sku} + (${item.color != null} ? ' · ' + ${item.color} : '') + (${item.sizeName != null} ? ' · ' + ${item.sizeName} : '')">TEE-M-BLK · Black · M</span>
+            </td>
+            <td align="right" style="padding:8px;" th:text="${item.quantity}">2</td>
+            <td align="right" style="padding:8px;white-space:nowrap;"
+                th:text="${item.lineTotal != null} ? ${#numbers.formatDecimal(item.lineTotal, 1, 'COMMA', 2, 'POINT')} + ' ' + ${currency} : '-'">20.00 USD</td>
+        </tr>
+    </table>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;margin-top:12px;">
+        <tr th:if="${order.discountAmount != null and order.discountAmount.signum() > 0}">
+            <td align="right" style="padding:4px 8px;color:#6b7280;">Discount</td>
+            <td align="right" style="padding:4px 8px;width:130px;white-space:nowrap;"
+                th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 1, 'COMMA', 2, 'POINT')} + ' ' + ${currency}">-2.00 USD</td>
+        </tr>
+        <tr>
+            <td align="right" style="padding:8px;font-weight:bold;border-top:2px solid #111827;">Total</td>
+            <td align="right" style="padding:8px;width:130px;font-weight:bold;border-top:2px solid #111827;white-space:nowrap;"
+                th:text="${order.totalOrderPrice != null} ? ${#numbers.formatDecimal(order.totalOrderPrice, 1, 'COMMA', 2, 'POINT')} + ' ' + ${currency} : '-'">18.00 USD</td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

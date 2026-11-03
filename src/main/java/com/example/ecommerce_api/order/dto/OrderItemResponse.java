@@ -23,6 +23,7 @@ public class OrderItemResponse {
     private Integer quantity;
 
     private BigDecimal price;
+    private BigDecimal discountPercent;
     private BigDecimal priceAfterDiscount;
     private BigDecimal lineTotal;
 }

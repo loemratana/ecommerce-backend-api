@@ -2,10 +2,12 @@ package com.example.ecommerce_api.product.entity;
 
 
 import com.example.ecommerce_api.Enum.CatalogStatus;
+import com.example.ecommerce_api.Enum.ProductType;
 import com.example.ecommerce_api.brand.entity.Brand;
 import com.example.ecommerce_api.category.entity.SubCategory;
 import com.example.ecommerce_api.review.entity.Review;
 import jakarta.persistence.*;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,7 +30,8 @@ import java.util.List;
 @Table(name = "products",
         indexes = {
                 @Index(name = "idx_product_sub_category", columnList = "sub_category_id"),
-                @Index(name = "idx_product_brand", columnList = "brand_id")
+                @Index(name = "idx_product_brand", columnList = "brand_id"),
+                @Index(name = "idx_product_type", columnList = "product_type")
         }
 )
 public class Product {
@@ -54,13 +57,22 @@ public class Product {
     @Column(nullable = false, length = 20)
     private CatalogStatus status = CatalogStatus.ACTIVE;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "product_type", length = 20)
+    private ProductType productType;
+
     @Column(name = "ratings_average", nullable = false, precision = 3, scale = 2)
     private BigDecimal ratingsAverage = BigDecimal.ZERO;
 
     @Column(name = "ratings_quantity", nullable = false)
     private int ratingsQuantity = 0;
 
-
+    /**
+     * Product-wide discount (0-100). Applies to every variant that has no discount of its own;
+     * a variant's own discountPercent always wins. Null = no product discount.
+     */
+    @Column(name = "discount_percent", precision = 5, scale = 2)
+    private BigDecimal discountPercent;
 
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -101,6 +113,7 @@ public class Product {
      * Best image to show for a chosen variant color: the first image tagged with that
      * color, else the cover, else the first general image.
      */
+    @Transactional
     public String imageFor(String color) {
         Comparator<ProductImage> bySortOrder = Comparator.comparingInt(ProductImage::getSortOrder);
         if (color != null && images != null) {
@@ -119,6 +132,8 @@ public class Product {
                 .map(ProductImage::getImageUrl)
                 .orElse(null);
     }
+
+
 
     public boolean isActive() {
         return status == CatalogStatus.ACTIVE;

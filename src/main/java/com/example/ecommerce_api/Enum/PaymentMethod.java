@@ -5,5 +5,7 @@ public enum PaymentMethod {
     /** Stripe hosted Checkout; confirmed by asking Stripe when the customer returns. */
     STRIPE,
     /** Paid in cash to the courier; the payment is collected when the order is delivered. */
-    CASH_ON_DELIVERY
+    CASH_ON_DELIVERY,
+    /** ABA PayWay hosted checkout (cards, ABA Pay, KHQR); confirmed by asking PayWay on return or callback. */
+    ABA_PAYWAY
 }

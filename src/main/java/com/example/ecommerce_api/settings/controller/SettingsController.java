@@ -47,6 +47,22 @@ public class SettingsController {
         return ResponseEntity.ok(ApiResponse.success(settingsService.updateOrders(request), "Order settings saved"));
     }
 
+    @Operation(summary = "Update the low-stock threshold",
+            description = "Used by the inventory status, the dashboard stats and the low-stock notification")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/inventory")
+    public ResponseEntity<ApiResponse<SettingsResponse>> updateInventory(@Valid @RequestBody InventorySettingsRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(settingsService.updateInventory(request), "Inventory settings saved"));
+    }
+
+    @Operation(summary = "Turn the customer order-confirmation email on or off",
+            description = "Where admin alerts go is managed under /settings/notification-destinations")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/notifications")
+    public ResponseEntity<ApiResponse<SettingsResponse>> updateNotifications(@Valid @RequestBody NotificationSettingsRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(settingsService.updateNotifications(request), "Notification settings saved"));
+    }
+
     @Operation(summary = "Update currency and timezone", description = "Currency is a label only; amounts are not converted")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/localization")

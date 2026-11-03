@@ -27,6 +27,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Optional<String> findOrderNumberByProviderReference(@Param("method") PaymentMethod method,
                                                         @Param("reference") String providerReference);
 
+    /** Unlocked lookup by gateway id, e.g. for a gateway callback that re-checks the payment first. */
+    Optional<Payment> findByMethodAndProviderReference(PaymentMethod method, String providerReference);
+
     /** Used by gateway events; locked so two deliveries of related events can't both apply. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Payment p WHERE p.method = :method AND p.providerReference = :reference")

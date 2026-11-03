@@ -1,6 +1,7 @@
 package com.example.ecommerce_api.coupon.controller;
 
 import com.example.ecommerce_api.common.response.ApiResponse;
+import com.example.ecommerce_api.coupon.dto.AvailableCouponResponse;
 import com.example.ecommerce_api.coupon.dto.CouponCreateRequest;
 import com.example.ecommerce_api.coupon.dto.CouponResponse;
 import com.example.ecommerce_api.coupon.dto.CouponUpdateRequest;
@@ -27,6 +28,14 @@ import java.util.List;
 public class CouponController {
 
     private final CouponService couponService;
+
+    @Operation(summary = "Coupons shoppers can use now",
+            description = "Public: coupons marked 'show in storefront' that are active, unexpired and have uses left (code, discount, minimum order, expiry).")
+    @PreAuthorize("permitAll()")
+    @GetMapping("/available")
+    public ResponseEntity<ApiResponse<List<AvailableCouponResponse>>> getAvailable() {
+        return ResponseEntity.ok(ApiResponse.success(couponService.getAvailable()));
+    }
 
     @Operation(summary = "Get all coupons")
     @GetMapping

@@ -4,6 +4,7 @@ package com.example.ecommerce_api.coupon.services;
 import com.example.ecommerce_api.common.exception.BadRequestException;
 import com.example.ecommerce_api.common.exception.DuplicateResourceException;
 import com.example.ecommerce_api.common.exception.ResourceNotFoundException;
+import com.example.ecommerce_api.coupon.dto.AvailableCouponResponse;
 import com.example.ecommerce_api.coupon.dto.CouponCreateRequest;
 import com.example.ecommerce_api.coupon.dto.CouponResponse;
 import com.example.ecommerce_api.coupon.dto.CouponUpdateRequest;
@@ -12,6 +13,7 @@ import com.example.ecommerce_api.coupon.mapper.CouponMapper;
 import com.example.ecommerce_api.coupon.repository.CouponRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,8 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class CouponServiceImpl  implements  CouponService{
+
+    private static final int MAX_AVAILABLE = 20;
 
     private final CouponRepository couponRepository;
     private  final CouponMapper couponMapper ;
@@ -98,6 +102,15 @@ public class CouponServiceImpl  implements  CouponService{
         Coupon coupon = findById(id);
         coupon.setActive(false);
         return couponMapper.toResponse(couponRepository.save(coupon));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AvailableCouponResponse> getAvailable() {
+        return couponRepository.findAvailable(LocalDateTime.now(), PageRequest.of(0, MAX_AVAILABLE)).stream()
+                .map(c -> new AvailableCouponResponse(c.getCode(), c.getDiscountType(), c.getDiscountValue(),
+                        c.getMinOrderAmount(), c.getExpiryDate()))
+                .toList();
     }
 
     @Override

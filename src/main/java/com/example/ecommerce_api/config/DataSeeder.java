@@ -320,7 +320,6 @@ public class DataSeeder implements CommandLineRunner {
             variant.setColor(variantColor);
             variant.setSku(sku);
             variant.setPrice(price);
-            variant.setPriceAfterDiscount(price);
             variant.setSoldQuantity(0);
             variant.setSize(size);
             variant.setProduct(product);

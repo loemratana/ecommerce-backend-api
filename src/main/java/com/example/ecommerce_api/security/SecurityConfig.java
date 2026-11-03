@@ -50,6 +50,10 @@ public class SecurityConfig {
             "/api/v1/auth/register",
             "/api/v1/auth/qr/consume",
 
+            // ABA PayWay: opened by the customer's browser / called by PayWay, both without a JWT
+            "/api/v1/payments/aba-payway/checkout/**",
+            "/api/v1/payments/aba-payway/callback",
+
             // Swagger
             "/swagger-ui.html",
             "/swagger-ui/**",
@@ -75,6 +79,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/categories/**").hasAnyRole("CUSTOMER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/product/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/settings/public").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/coupons/available").permitAll()
                         .requestMatchers("/api/v1/product/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/images/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/review/**").authenticated()

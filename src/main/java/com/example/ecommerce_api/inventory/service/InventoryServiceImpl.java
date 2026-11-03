@@ -16,7 +16,9 @@ import com.example.ecommerce_api.inventory.mapper.InventoryMapper;
 import com.example.ecommerce_api.inventory.repository.InventoryRepository;
 import com.example.ecommerce_api.inventory.repository.InventoryTransactionRepository;
 import com.example.ecommerce_api.product.entity.ProductVariants;
+import com.example.ecommerce_api.notification.service.NotificationService;
 import com.example.ecommerce_api.product.repository.ProductVariantRepository;
+import com.example.ecommerce_api.settings.service.SettingsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +36,8 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryTransactionRepository inventoryTransactionRepository;
     private final ProductVariantRepository productVariantRepository;
     private final InventoryMapper inventoryMapper;
+    private final SettingsService settingsService;
+    private final NotificationService notificationService;
 
     // ---------------------------------------------------------------------
     // Queries
@@ -53,7 +57,7 @@ public class InventoryServiceImpl implements InventoryService {
     public PageResponse<InventoryResponse> search(String search, InventoryStatus status, Pageable pageable) {
 
         String term = search == null ? "" : search.trim().toLowerCase();
-        int low = InventoryMapper.LOW_STOCK_THRESHOLD;
+        int low = settingsService.lowStockThreshold();
 
         // Translate the status into a range of available quantity (same rules as InventoryMapper.toStatus)
         int min = Integer.MIN_VALUE;
@@ -75,7 +79,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional(readOnly = true)
     public InventoryStatsResponse getStats() {
 
-        int low = InventoryMapper.LOW_STOCK_THRESHOLD;
+        int low = settingsService.lowStockThreshold();
 
         return InventoryStatsResponse.builder()
                 .totalVariants(inventoryRepository.count())
@@ -173,7 +177,10 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public void reserve(Long productVariantId, int quantity) {
         // Reservation does not change on-hand stock, so no transaction is logged.
-        lockByVariant(productVariantId).reserve(quantity);
+        Inventory inventory = lockByVariant(productVariantId);
+        int availableBefore = inventory.getAvailableQuantity();
+        inventory.reserve(quantity);
+        alertIfLowStock(inventory, availableBefore);
     }
 
     @Override
@@ -200,6 +207,7 @@ public class InventoryServiceImpl implements InventoryService {
         validateAdjustment(type, delta);
 
         Inventory inventory = lockByVariant(productVariantId);
+        int availableBefore = inventory.getAvailableQuantity();
         if (delta > 0) {
             inventory.increase(delta);
         } else {
@@ -207,6 +215,7 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         logTransaction(inventory, type, delta, null, null, note);
+        alertIfLowStock(inventory, availableBefore);
         return inventoryMapper.toInventoryResponse(inventoryRepository.saveAndFlush(inventory));
     }
 
@@ -259,6 +268,27 @@ public class InventoryServiceImpl implements InventoryService {
         return inventoryRepository.lockByProductVariant_Id(productVariantId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Inventory not found for product variant: " + productVariantId));
+    }
+
+    /**
+     * Notifies once when available stock drops to the threshold, and once more if it then runs out;
+     * later sales of a variant that is already low don't repeat it. Restocking above the threshold
+     * re-arms the alert. Sent only if the transaction commits.
+     */
+    private void alertIfLowStock(Inventory inventory, int availableBefore) {
+        int threshold = settingsService.lowStockThreshold();
+        int availableAfter = inventory.getAvailableQuantity();
+        if (reachedLowStock(availableBefore, availableAfter, threshold)) {
+            ProductVariants variant = inventory.getProductVariant();
+            notificationService.notifyLowStock(variant.getProduct().getTitle(), variant.getSku(),
+                    availableAfter, threshold);
+        }
+    }
+
+    static boolean reachedLowStock(int availableBefore, int availableAfter, int threshold) {
+        boolean becameLow = availableBefore > threshold && availableAfter <= threshold;
+        boolean ranOut = availableBefore > 0 && availableAfter <= 0;
+        return becameLow || ranOut;
     }
 
     private void logTransaction(Inventory inventory, InventoryTransactionType type, int quantityChange,

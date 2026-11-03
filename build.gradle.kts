@@ -23,6 +23,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
+	implementation("org.springframework.boot:spring-boot-starter-mail")                // notification emails (SMTP)
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0")
     runtimeOnly("org.postgresql:postgresql")
     implementation("com.cloudinary:cloudinary-http44:1.39.0")
@@ -41,6 +42,7 @@ dependencies {
 	implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
+
     compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")
 	testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
