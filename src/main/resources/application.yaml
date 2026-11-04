@@ -9,7 +9,7 @@ spring:
   datasource:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://{SPRING_DATASOURCE_HOST}:{SPRING_DATASOURCE_PORT}/{SPRING_DATASOURCE_DATABASE}}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${SPRING_DATASOURCE_HOST}:${SPRING_DATASOURCE_PORT}/${SPRING_DATASOURCE_DATABASE}}
     driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
   jpa:
     hibernate:
