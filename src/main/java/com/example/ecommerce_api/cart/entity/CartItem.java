@@ -43,21 +43,9 @@ public class CartItem {
     private Integer quantity;
 
     /**
-     * Price captured when the product is added
-     * to the cart.
-     *
-     * Example:
-     *
-     * Product price = $100
-     * User adds product
-     * CartItem price = $100
-     *
-     * Later product price becomes $120.
-     *
-     * CartItem price remains $100 until
-     * your application explicitly updates it.
+     * Unit price after the product discount (ProductVariants.getPriceAfterDiscount()). Refreshed
+     * whenever the cart is read or the item changes, so it always matches what checkout charges.
      */
-
 
     @Column(nullable = false,scale = 2,precision = 19)
     @DecimalMin(value = "0.0",inclusive = true,message = "Price must be greater than 0")

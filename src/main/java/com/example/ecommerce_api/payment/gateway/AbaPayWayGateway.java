@@ -164,13 +164,20 @@ public class AbaPayWayGateway implements PaymentGateway {
         }
 
         Map<?, ?> status = response.get("status") instanceof Map<?, ?> map ? map : Map.of();
-        if (!"00".equals(String.valueOf(status.get("code")))) {
-            // e.g. code 6 "Transaction not found": the customer never submitted the form
-            log.debug("ABA PayWay has no result for {}: {} {}", tranId, status.get("code"), status.get("message"));
+        String code = String.valueOf(status.get("code"));
+        if (!"00".equals(code)) {
+            if ("6".equals(code)) {
+                // "Transaction not found": the customer hasn't opened PayWay's checkout yet
+                log.debug("ABA PayWay has no transaction {} yet", tranId);
+            } else {
+                // e.g. a wrong hash / merchant id: the order would stay PENDING forever, so say why
+                log.warn("ABA PayWay check-transaction for {} answered {} {}", tranId, code, status.get("message"));
+            }
             return null;
         }
         Map<?, ?> data = response.get("data") instanceof Map<?, ?> map ? map : Map.of();
-        String paymentStatus = String.valueOf(data.get("payment_status"));
+        String paymentStatus = String.valueOf(data.get("payment_status")).trim().toUpperCase(java.util.Locale.ROOT);
+        log.debug("ABA PayWay transaction {} is {} ({})", tranId, paymentStatus, data);
 
         // The event id only has to be unique per outcome: a transaction is approved or declined once.
         return switch (paymentStatus) {

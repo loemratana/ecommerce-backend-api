@@ -58,7 +58,7 @@ public class OrderItem {
     private BigDecimal discountPercent;
 
 
-    /** Unit price actually charged (variant sale price, if any). Coupons are applied on the order. */
+    /** Unit price actually charged: price minus the product discount. Coupons are applied on the order. */
     @DecimalMin(value = "0.00")
     @Column(precision = 19, scale = 2, nullable = false)
     private BigDecimal priceAfterDiscount;
@@ -101,11 +101,9 @@ public class OrderItem {
         this.productVariant = variant;
         this.quantity = quantity;
         this.price = variant.getPrice();
-        // snapshot the discount actually applied (variant's own, else the product-wide one)
-        this.discountPercent  = variant.getEffectiveDiscountPercent();
-        this.priceAfterDiscount = variant.getPriceAfterDiscount() != null
-                ? variant.getPriceAfterDiscount()
-                : variant.getPrice();
+        // snapshot of the product discount at order time; later discount changes don't touch this order
+        this.discountPercent = variant.getEffectiveDiscountPercent();
+        this.priceAfterDiscount = variant.getPriceAfterDiscount();
         this.productName = variant.getProduct() != null ? variant.getProduct().getTitle() : variant.getSku();
         this.sku = variant.getSku();
         this.color = variant.getColor();

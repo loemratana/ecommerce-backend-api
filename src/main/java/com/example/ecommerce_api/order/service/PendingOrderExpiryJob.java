@@ -2,6 +2,7 @@ package com.example.ecommerce_api.order.service;
 
 import com.example.ecommerce_api.Enum.OrderStatus;
 import com.example.ecommerce_api.order.repository.OrderRepository;
+import com.example.ecommerce_api.payment.service.PaymentService;
 import com.example.ecommerce_api.settings.service.SettingsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,7 @@ public class PendingOrderExpiryJob {
     private final OrderRepository orderRepository;
     private final OrderService orderService;
     private final SettingsService settingsService;
+    private final PaymentService paymentService;
 
     @Scheduled(fixedDelayString = "${app.order.expiry-check-interval:PT1M}")
     public void expireUnpaidOrders() {
@@ -39,6 +41,12 @@ public class PendingOrderExpiryJob {
         for (String orderNumber : orderNumbers) {
             // One transaction per order, so one failure doesn't roll back the others.
             try {
+                // Last check with the gateway: a customer who paid shouldn't lose the order to the timer.
+                try {
+                    paymentService.syncPendingPayments(orderNumber);
+                } catch (RuntimeException e) {
+                    log.warn("Could not check payments of order {} before expiring it: {}", orderNumber, e.getMessage());
+                }
                 if (orderService.expireIfStillPending(orderNumber)) expired++;
             } catch (RuntimeException e) {
                 log.error("Could not expire order {}", orderNumber, e);

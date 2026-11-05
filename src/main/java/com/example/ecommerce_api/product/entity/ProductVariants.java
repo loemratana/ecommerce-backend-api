@@ -35,11 +35,9 @@ public class ProductVariants {
     @Column(length = 50,nullable = false,unique = true)
     private String sku;
 
+    /** Regular unit price. Discounts are set on the Product only (Product.discountPercent). */
     @Column(precision = 19,scale = 2,nullable = false)
     private BigDecimal price;
-
-    @Column(name = "discount_percent", precision = 5 , scale = 2)
-    private BigDecimal discountPercent;
 
     private  Integer soldQuantity;
 
@@ -70,54 +68,43 @@ public class ProductVariants {
 
 
     /**
-     * Discount actually applied to this variant: its own discountPercent if set (> 0),
-     * otherwise the product-wide discountPercent, otherwise null. Capped at 100.
+     * The product's discount (0-100] that applies to this variant, or null when the product has none.
+     * Variants have no discount of their own.
      */
     @Transient
     public BigDecimal getEffectiveDiscountPercent()
     {
-        BigDecimal pct = positiveOrNull(discountPercent);
-        if (pct == null && product != null)
+        BigDecimal pct = product == null ? null : product.getDiscountPercent();
+        if (pct == null || pct.signum() <= 0)
         {
-            pct = positiveOrNull(product.getDiscountPercent());
+            return null;
         }
-        return pct == null ? null : pct.min(BigDecimal.valueOf(100));
+        return pct.min(BigDecimal.valueOf(100));
     }
 
+    /** Unit price the customer pays: price minus the product discount, rounded to cents. */
     @Transient
     public BigDecimal getPriceAfterDiscount()
     {
-        if (price ==null)
+        if (price == null)
         {
             return BigDecimal.ZERO;
         }
-
-        BigDecimal pct = getEffectiveDiscountPercent();
-        if (pct == null)
-        {
-            return price;
-        }
-
-        BigDecimal discountAmount = price.multiply(pct).divide(BigDecimal.valueOf(100),2, RoundingMode.HALF_UP);
-
-        return price.subtract(discountAmount).setScale(2,RoundingMode.HALF_UP);
+        return price.subtract(getDiscountAmount()).setScale(2, RoundingMode.HALF_UP);
     }
 
-    private static BigDecimal positiveOrNull(BigDecimal value)
-    {
-        return value == null || value.signum() <= 0 ? null : value;
-    }
-
-
+    /** Amount taken off one unit by the product discount (0 when there is none). */
     @Transient
     public BigDecimal getDiscountAmount()
     {
-        if (price  ==null)
+        BigDecimal pct = getEffectiveDiscountPercent();
+        if (price == null || pct == null)
         {
-            return BigDecimal.ZERO;
+            return BigDecimal.ZERO.setScale(2);
         }
-        return price.subtract(getPriceAfterDiscount());
+        return price.multiply(pct).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
     }
+
     public boolean isActive() {
         return status == CatalogStatus.ACTIVE;
     }

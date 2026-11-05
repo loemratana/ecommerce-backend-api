@@ -29,6 +29,14 @@ public interface PaymentService {
      */
     List<PaymentResponse> confirmMyOrderPayments(String orderNumber);
 
+    // background
+    /**
+     * Same check as confirmMyOrderPayments, for any order and without a logged-in customer: used by
+     * PendingPaymentSyncJob and before an unpaid order is expired, so a payment completed at the
+     * gateway is applied even if the customer never came back and the callback never arrived.
+     */
+    void syncPendingPayments(String orderNumber);
+
     // admin
     /** Null status or method means any. */
     PageResponse<PaymentResponse> getAll(PaymentStatus status, PaymentMethod method, Pageable pageable);

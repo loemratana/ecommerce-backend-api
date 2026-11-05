@@ -293,8 +293,8 @@ public class ProductServiceImpl implements ProductService {
     }
 
     /**
-     * Validates the variant list (non-empty, no duplicate SKUs within the request,
-     * discount price not greater than price) and returns the set of requested SKUs.
+     * Validates the variant list (non-empty, no duplicate SKUs or color+size pairs within the
+     * request) and returns the set of requested SKUs.
      */
     private Set<String> validateVariants(List<ProductVariantsRequest> variants) {
         if (variants == null || variants.isEmpty()) {
@@ -311,12 +311,6 @@ public class ProductServiceImpl implements ProductService {
             if (!colorSizes.add(colorKey(variant.getColor()) + "|" + variant.getSizeId())) {
                 throw new BadRequestException("Duplicate variant: color '" + variant.getColor()
                         + "' with size id " + variant.getSizeId() + " appears more than once");
-            }
-            if (variant.getPriceAfterDiscount() != null && variant.getPrice() != null
-                    && variant.getPriceAfterDiscount().compareTo(variant.getPrice()) > 0) {
-                throw new BadRequestException(
-                        "Discount price cannot be greater than price for SKU: " + variant.getSku()
-                );
             }
         }
         return skus;

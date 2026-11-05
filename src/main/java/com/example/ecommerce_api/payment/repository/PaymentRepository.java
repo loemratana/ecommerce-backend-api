@@ -36,6 +36,18 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     Optional<Payment> lockByProviderReference(@Param("method") PaymentMethod method,
                                               @Param("reference") String providerReference);
 
+    /**
+     * Orders that are still waiting for an online payment that may have finished at the gateway:
+     * the payment is PENDING, uses one of {@code methods}, and the order itself is still PENDING.
+     */
+    @Query("SELECT DISTINCT p.order.orderNumber FROM Payment p "
+            + "WHERE p.status = com.example.ecommerce_api.Enum.PaymentStatus.PENDING "
+            + "AND p.method IN :methods "
+            + "AND p.providerReference IS NOT NULL "
+            + "AND p.order.status = com.example.ecommerce_api.Enum.OrderStatus.PENDING")
+    List<String> findOrderNumbersAwaitingGateway(@Param("methods") java.util.Collection<PaymentMethod> methods,
+                                                 Pageable pageable);
+
     /** Admin list; null status or method means any. */
     @EntityGraph(attributePaths = {"order", "order.user"})
     @Query("SELECT p FROM Payment p WHERE (:status IS NULL OR p.status = :status) AND (:method IS NULL OR p.method = :method)")

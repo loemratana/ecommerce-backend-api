@@ -84,15 +84,24 @@ public class Cart {
         recalculateTotalPrice();
     }
 
+    /**
+     * totalCartPrice          = sum of regular price x quantity (before the product discount)
+     * totalPriceAfterDiscount = sum of item price x quantity (what checkout charges as the order
+     *                           subtotal, before coupons, tax and shipping)
+     */
     public void recalculateTotalPrice()
     {
-        this.totalCartPrice = items.stream().map(
-                item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()))
-        ).reduce(BigDecimal.ZERO, BigDecimal::add);
-        // If there is currently no discount logic,
-        // final price = original price.
-
-        this.totalPriceAfterDiscount = this.totalCartPrice;
+        this.totalCartPrice = items.stream()
+                .map(item -> {
+                    BigDecimal regular = item.getProductVariants() != null && item.getProductVariants().getPrice() != null
+                            ? item.getProductVariants().getPrice()
+                            : item.getPrice();
+                    return regular.multiply(BigDecimal.valueOf(item.getQuantity()));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        this.totalPriceAfterDiscount = items.stream()
+                .map(CartItem::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public BigDecimal getTotalQuantity ()

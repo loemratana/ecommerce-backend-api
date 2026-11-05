@@ -39,7 +39,7 @@ public class ProductRequest {
     /** MEN, WOMEN or UNISEX; optional. */
     private ProductType productType;
 
-    /** Product-wide discount (0-100); used by variants that have no discount of their own. */
+    /** Discount (0-100) for every variant of this product; null or 0 = no discount. */
     @DecimalMin(value = "0.0", inclusive = true, message = "Discount percent cannot be negative")
     @DecimalMax(value = "100.0", inclusive = true, message = "Discount percent cannot exceed 100")
     private BigDecimal discountPercent;

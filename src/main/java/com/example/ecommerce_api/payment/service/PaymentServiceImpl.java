@@ -72,15 +72,29 @@ public class PaymentServiceImpl implements PaymentService{
                 .filter(o -> o.getUser().getId().equals(userId))
                 .orElseThrow(() -> orderNotFound(orderNumber));
 
+        checkPendingWithGateways(order);
+        return toResponses(order);
+    }
+
+    @Override
+    public void syncPendingPayments(String orderNumber) {
+        orderRepository.lockByOrderNumber(orderNumber)
+                .filter(order -> order.getStatus() == OrderStatus.PENDING)
+                .ifPresent(this::checkPendingWithGateways);
+    }
+
+    /** Asks each pending payment's gateway what happened and applies it. The caller holds the order lock. */
+    private void checkPendingWithGateways(Order order) {
         for (Payment pending : paymentRepository.findByOrderIdAndStatus(order.getId(), PaymentStatus.PENDING))
         {
             GatewayEvent event = gatewayResolver.get(pending.getMethod()).checkStatus(pending);
             if (event != null)
             {
+                log.info("{} payment {} for order {}: gateway reports {}", pending.getMethod(), pending.getId(),
+                        order.getOrderNumber(), event.type());
                 handleGatewayEvent(pending.getMethod(), event);
             }
         }
-        return toResponses(order);
     }
 
     @Override

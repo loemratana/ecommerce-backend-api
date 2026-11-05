@@ -118,25 +118,15 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public void removeCartItem(Long cartItemId) {
-        User user = securityUtils.getCurrentUser();
-        Cart cart = cartRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
-
-        CartItem item = cartItemRepository.findByIdAndCartId(cartItemId, cart.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Cart item not found: " + cartItemId));
-
-        cartItemRepository.delete(item);
+        Cart cart = getExistingCart();
+        // orphanRemoval deletes the row; removeItem also recalculates the stored totals
+        cart.removeItem(findItem(cart, cartItemId));
     }
 
     @Override
     @Transactional
     public void clearCart() {
-        User user = securityUtils.getCurrentUser();
-        Cart cart = cartRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
-
-        cartItemRepository.deleteAllByCartId(cart.getId());
+        getExistingCart().clearItems();   // orphanRemoval deletes the rows, totals go back to 0
     }
 
     // ---------- HELPERS ----------
@@ -191,8 +181,6 @@ public class CartServiceImpl implements CartService {
 
     /** Same rule OrderItem uses, so cart total = order subtotal. */
     private BigDecimal resolveUnitPrice(ProductVariants variant) {
-        return variant.getPriceAfterDiscount() != null
-                ? variant.getPriceAfterDiscount()
-                : variant.getPrice();
+        return variant.getPriceAfterDiscount();
     }
 }
