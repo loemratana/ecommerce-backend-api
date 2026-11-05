@@ -8,6 +8,8 @@ import com.example.ecommerce_api.product.entity.ProductSize;
 import com.example.ecommerce_api.product.entity.ProductVariants;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+
 @Component
 public class ProductVariantMapper {
 
@@ -16,7 +18,7 @@ public class ProductVariantMapper {
         productVariants.setColor(normalizeColor(request.getColor()));
         productVariants.setSku(request.getSku());
         productVariants.setPrice(request.getPrice());
-        productVariants.setPriceAfterDiscount(request.getPriceAfterDiscount());
+        productVariants.setDiscountPercent(normalizeDiscount(request.getDiscountPercent()));
         productVariants.setSoldQuantity(0);   // only the order flow (confirmSale) changes it
         return productVariants;
     }
@@ -29,8 +31,11 @@ public class ProductVariantMapper {
                 .color(productVariants.getColor())
                 .sku(productVariants.getSku())
                 .price(productVariants.getPrice())
+                .discountPercent(productVariants.getDiscountPercent())
+                .effectiveDiscountPercent(productVariants.getEffectiveDiscountPercent())
                 .priceAfterDiscount(productVariants.getPriceAfterDiscount())
                 .soldQuantity(productVariants.getSoldQuantity())
+                .discountAmount(productVariants.getDiscountAmount())
                 .availableQuantity(productVariants.getInventory() != null
                         ? productVariants.getInventory().getAvailableQuantity() : 0)
                 .size(toSizeResponse(productVariants.getSize()))
@@ -51,10 +56,20 @@ public class ProductVariantMapper {
         entity.setColor(normalizeColor(request.getColor()));
         entity.setSku(request.getSku());
         entity.setPrice(request.getPrice());
-        entity.setPriceAfterDiscount(request.getPriceAfterDiscount());
+        entity.setDiscountPercent(normalizeDiscount(request.getDiscountPercent()));
     }
 
     private String normalizeColor(String color) {
         return color == null || color.isBlank() ? null : color.trim();
+    }
+
+    private BigDecimal normalizeDiscount(BigDecimal discountPercent)
+    {
+        if (discountPercent ==null || discountPercent.signum() <=0)
+        {
+            return  null;
+        }
+
+        return discountPercent;
     }
 }

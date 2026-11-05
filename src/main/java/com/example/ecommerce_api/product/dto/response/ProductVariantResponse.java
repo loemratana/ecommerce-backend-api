@@ -27,4 +27,10 @@ public class ProductVariantResponse {
     private Integer soldQuantity;
     /** Stock the customer can still order (quantity - reserved). */
     private Integer availableQuantity;
+    /** The variant's OWN discount percentage (null = none; falls back to the product's). */
+    private BigDecimal discountPercent;
+    /** Discount actually applied: the variant's own, else the product-wide one (null = none). */
+    private BigDecimal effectiveDiscountPercent;
+    /** How much the customer saves vs. list price. */
+    private BigDecimal discountAmount;
 }

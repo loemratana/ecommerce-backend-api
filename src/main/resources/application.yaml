@@ -2,9 +2,7 @@ spring:
   application:
     name: ecommerce-api
   config:
-    # Loads KEY=value pairs from .env in the working directory (the project root when run from
-    # IntelliJ or Gradle). Real environment variables still win over these. Optional: the app
-    # starts without the file. Note an EMPTY value here overrides a ${KEY:default} in this yaml.
+
     import: optional:file:.env[.properties]
   datasource:
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -25,6 +23,18 @@ spring:
       enabled: true
       max-file-size: 10MB
       max-request-size: 10MB
+  # SMTP for notification emails. Empty SMTP_HOST = email is off (the EMAIL channel reports "not configured")
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USER:}
+    password: ${SMTP_PASS:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -48,6 +58,8 @@ cloudinary:
 app:
   seed:
     enabled: ${APP_SEED_ENABLED:false}
+    # true = add 100 sample fashion products (CatalogProductSeeder); existing slugs are skipped
+    catalog-products: ${APP_SEED_CATALOG_PRODUCTS:false}
   order:
     tax-rate: ${APP_ORDER_TAX_RATE:0.00}          # 0.10 = 10% on (subtotal - discount)
     shipping-fee: ${APP_ORDER_SHIPPING_FEE:0.00}
@@ -61,6 +73,8 @@ app:
     currency: ${APP_INVOICE_CURRENCY:USD}
   localization:
     timezone: ${APP_TIMEZONE:Asia/Phnom_Penh}
+  inventory:
+    low-stock-threshold: ${LOW_STOCK_THRESHOLD:10}               # available stock at or below this is "low" (badge, stats, alert)
   minio:
     url: ${MINIO_URL}
     access:
@@ -72,6 +86,36 @@ app:
     secret-key: ${STRIPE_SECRET_KEY:}
     # Customers come back here after paying: /checkout/success and /checkout/cancel
     storefront-url: ${STOREFRONT_URL:http://localhost:3000}
+
+  aba-payway:
+    # Empty merchant-id or public-key = ABA PayWay is off: the gateway isn't created
+    merchant-id: ${ABA_PAYWAY_MERCHANT_ID:}
+    # PayWay's API key ("public key"); every request is signed with HMAC-SHA512 using it
+    public-key: ${ABA_PAYWAY_PUBLIC_KEY:}
+    # Not used yet: PayWay's refund API needs ABA's RSA keys, so refunds are made in the merchant portal
+    secret-key: ${ABA_PAYWAY_SECRET_KEY:}
+    # Sandbox; production is https://checkout.payway.com.kh
+    base-url: ${ABA_PAYWAY_BASE_URL:https://checkout-sandbox.payway.com.kh}
+    # Optional. Public URL of OUR callback, e.g. https://<your-domain>/api/v1/payments/aba-payway/callback.
+    # PayWay posts there after a payment, so the order is paid even if the customer closes the tab.
+    callback-url: ${ABA_PAYWAY_CALLBACK_URL:}
+    # Customers come back here after paying: /checkout/success and /checkout/cancel
+    storefront-url: ${STOREFRONT_URL:http://localhost:3000}
+    # PayWay payment_option: empty = PayWay shows every method enabled on the profile;
+    # or one of cards, abapay_khqr, abapay_khqr_deeplink, alipay, wechat, google_pay
+    payment-option: ${ABA_PAYWAY_PAYMENT_OPTION:}
+
+  # Store notifications (new order, low stock, new product). WHERE they go - Telegram groups and email
+  # addresses per event - is managed by admins: Settings -> notification destinations. Only credentials live here.
+  notifications:
+    enabled: ${NOTIFICATIONS_ENABLED:true}
+    # From @BotFather. Empty = Telegram is off. One bot serves every group: add it to each group.
+    telegram:
+      bot-token: ${TELEGRAM_BOT_TOKEN:}
+    # Sender address for notification emails; must be allowed by the SMTP server
+    email-from: ${EMAIL_FROM:}
+    # Starting value only: admins switch the customer order-confirmation email in Settings -> Notifications
+    customer-order-email: ${CUSTOMER_ORDER_EMAIL:true}
 
 server:
   port: 8083
@@ -88,4 +132,10 @@ logging:
 
 springdoc:
   api-docs:
-    version: openapi_3_0   # springdoc 3.x defaults to 3.1, which fails to clone validated numeric param schemas
+    version: openapi_3_0   # springdoc 3.x defaults to 3.1, which fails to clone validated numeric param schemas\
+  swagger-ui:
+    path: /swagger-ui.html
+    filter: true
+    tags-sorter: alpha
+
+

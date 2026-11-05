@@ -1,12 +1,14 @@
 package com.example.ecommerce_api.product.dto.request;
 
 
+import com.example.ecommerce_api.Enum.ProductType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +35,14 @@ public class ProductRequest {
     private Long subCategoryId;
 
     private Long brandId;
+
+    /** MEN, WOMEN or UNISEX; optional. */
+    private ProductType productType;
+
+    /** Product-wide discount (0-100); used by variants that have no discount of their own. */
+    @DecimalMin(value = "0.0", inclusive = true, message = "Discount percent cannot be negative")
+    @DecimalMax(value = "100.0", inclusive = true, message = "Discount percent cannot exceed 100")
+    private BigDecimal discountPercent;
 
     @Valid
     @NotEmpty(message = "At least one product variant is required")

@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -92,7 +93,11 @@ public class OrderController {
     public ResponseEntity<ApiResponse<PageResponse<OrderSummaryResponse>>> getAll(
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(required = false) String search,
-            @PageableDefault(sort = "orderDate", direction = Sort.Direction.DESC) Pageable pageable) {
+            @ParameterObject
+            @PageableDefault(page = 0,size = 10,sort = "orderDate") Pageable pageable) {
+
+
+
         return ResponseEntity.ok(ApiResponse.success(orderService.getAll(status, search, pageable)));
     }
 

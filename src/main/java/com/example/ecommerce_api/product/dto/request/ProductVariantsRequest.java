@@ -29,6 +29,11 @@ public class ProductVariantsRequest {
     @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
     private BigDecimal price;
 
+
+    @DecimalMin(value = "0.0" ,inclusive = true, message ="Discount percent cannot be negative" )
+    @DecimalMax(value = "100.0",inclusive = true, message = "Discount percent cannot exceed 100")
+    private BigDecimal discountPercent;
+
     @DecimalMin(value = "0.0", inclusive = true, message = "Discount price cannot be negative")
     private BigDecimal priceAfterDiscount;
 

@@ -34,6 +34,9 @@ public class CouponCreateRequest {
 
     private Boolean active = true;
 
+    /** List the coupon for shoppers in the storefront; null = no (private code). */
+    private Boolean showInStorefront;
+
     /**
      * Maximum total number of times this coupon can be used.
      * null = unlimited

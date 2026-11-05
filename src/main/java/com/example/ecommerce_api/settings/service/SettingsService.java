@@ -55,6 +55,10 @@ public class SettingsService {
     private Duration defaultPendingTimeout;
     @Value("${app.order.return-window:P30D}")
     private Duration defaultReturnWindow;
+    @Value("${app.inventory.low-stock-threshold:10}")
+    private int defaultLowStockThreshold;
+    @Value("${app.notifications.customer-order-email:true}")
+    private boolean defaultCustomerOrderEmail;
     @Value("${app.invoice.currency:USD}")
     private String defaultCurrency;
     @Value("${app.localization.timezone:Asia/Phnom_Penh}")
@@ -87,6 +91,10 @@ public class SettingsService {
 
     public PublicSettingsResponse getPublic() {
         return PublicSettingsResponse.from(get());
+    }
+
+    public int lowStockThreshold() {
+        return get().getInventory().getLowStockThreshold();
     }
 
     public ZoneId zone() {
@@ -126,6 +134,16 @@ public class SettingsService {
             s.setPendingTimeoutMinutes(request.getPendingTimeoutMinutes());
             s.setReturnWindowDays(request.getReturnWindowDays());
         });
+    }
+
+    @Transactional
+    public SettingsResponse updateInventory(InventorySettingsRequest request) {
+        return update(s -> s.setLowStockThreshold(request.getLowStockThreshold()));
+    }
+
+    @Transactional
+    public SettingsResponse updateNotifications(NotificationSettingsRequest request) {
+        return update(s -> s.setCustomerOrderEmail(request.getCustomerOrderEmail()));
     }
 
     @Transactional
@@ -194,6 +212,8 @@ public class SettingsService {
         s.setShippingFee(defaultShippingFee.setScale(2, RoundingMode.HALF_UP));
         s.setPendingTimeoutMinutes((int) defaultPendingTimeout.toMinutes());
         s.setReturnWindowDays((int) defaultReturnWindow.toDays());
+        s.setLowStockThreshold(Math.max(0, defaultLowStockThreshold));
+        s.setCustomerOrderEmail(defaultCustomerOrderEmail);
         s.setCurrency(defaultCurrency);
         s.setTimezone(defaultTimezone);
         s.setAccessTokenTtlMinutes((int) Math.max(1, defaultAccessTokenTtlSeconds / 60));

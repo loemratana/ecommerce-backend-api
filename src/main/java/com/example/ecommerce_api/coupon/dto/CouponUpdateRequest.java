@@ -39,6 +39,9 @@ public class CouponUpdateRequest {
     @NotNull
     private Boolean active;
 
+    /** null = keep the current setting. */
+    private Boolean showInStorefront;
+
 
     @Positive(message = "Usage limit must be greater than 0")
     private Integer usageLimit;

@@ -1,5 +1,6 @@
 package com.example.ecommerce_api.coupon.services;
 
+import com.example.ecommerce_api.coupon.dto.AvailableCouponResponse;
 import com.example.ecommerce_api.coupon.dto.CouponCreateRequest;
 import com.example.ecommerce_api.coupon.dto.CouponResponse;
 import com.example.ecommerce_api.coupon.dto.CouponUpdateRequest;
@@ -28,6 +29,9 @@ public interface CouponService {
     CouponResponse activate(Long id);
 
     CouponResponse deactivate(Long id);
+
+    /** Public list for the storefront: coupons marked to show there that are active, unexpired and have uses left. */
+    List<AvailableCouponResponse> getAvailable();
 
     /** orderAmount is optional; when given, the minimum is checked and discountAmount is filled in. */
     CouponResponse validate(String code, BigDecimal orderAmount);

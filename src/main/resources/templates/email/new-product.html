@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<!-- NEW_PRODUCT. Variables: product (ProductResponse), brand, category, variants, priceFrom, stock, currency, storeName, title. -->
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{email/layout :: layout(|New product: ${product.title}|, ~{::content})}" lang="en">
+<body>
+<div th:fragment="content">
+    <img th:if="${product.imageCover != null}" th:src="${product.imageCover}" th:alt="${product.title}"
+         src="" alt="" width="552" style="display:block;max-width:100%;height:auto;border-radius:6px;margin-bottom:16px;"/>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;line-height:1.6;margin-bottom:16px;">
+        <tr th:if="${brand != null}">
+            <td style="color:#6b7280;width:110px;">Brand</td>
+            <td th:text="${brand}">Brand</td>
+        </tr>
+        <tr th:if="${category != null}">
+            <td style="color:#6b7280;">Category</td>
+            <td th:text="${category}">T-Shirts</td>
+        </tr>
+        <tr th:if="${priceFrom != null}">
+            <td style="color:#6b7280;">Price from</td>
+            <td style="font-weight:bold;"
+                th:text="${#numbers.formatDecimal(priceFrom, 1, 'COMMA', 2, 'POINT')} + ' ' + ${currency}">10.00 USD</td>
+        </tr>
+        <tr>
+            <td style="color:#6b7280;">Total stock</td>
+            <td th:text="${stock}">40</td>
+        </tr>
+        <tr>
+            <td style="color:#6b7280;">Slug</td>
+            <td th:text="${product.slug}">basic-tee</td>
+        </tr>
+    </table>
+
+    <table th:if="${!variants.isEmpty()}" role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="font-size:14px;border-collapse:collapse;">
+        <tr style="background:#f3f4f6;">
+            <th align="left" style="padding:8px;">SKU</th>
+            <th align="left" style="padding:8px;">Variant</th>
+            <th align="right" style="padding:8px;">Price</th>
+            <th align="right" style="padding:8px;">Stock</th>
+        </tr>
+        <tr th:each="v : ${variants}" style="border-bottom:1px solid #e5e7eb;">
+            <td style="padding:8px;" th:text="${v.sku}">TEE-M-BLK</td>
+            <td style="padding:8px;"
+                th:text="(${v.color != null} ? ${v.color} : '') + (${v.size != null} ? ' · ' + ${v.size.name} : '')">Black · M</td>
+            <td align="right" style="padding:8px;white-space:nowrap;"
+                th:with="price=${v.priceAfterDiscount != null ? v.priceAfterDiscount : v.price}"
+                th:text="${price != null} ? ${#numbers.formatDecimal(price, 1, 'COMMA', 2, 'POINT')} + ' ' + ${currency} : '-'">10.00 USD</td>
+            <td align="right" style="padding:8px;" th:text="${v.availableQuantity != null ? v.availableQuantity : 0}">20</td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

@@ -17,8 +17,6 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
 
     Optional<Role> findByNameIgnoreCase(String name);
 
-    Optional<Role> findByNameAndActiveTrue(String name);
-
 
     @Query(
             """
@@ -30,11 +28,11 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
     boolean existsUserWithRole(@Param("id") Long id);
 
 
+    Optional<Role> findByNameAndActiveTrue(String name);
+
     List<Role> findByActiveTrue();
 
     List<Role> findByActiveFalse();
-
-
 //    @Query(value = """
 //            SELECT  * FROM Role  r WHERE  r.name =:name and active = true
 //            """,nativeQuery = true)

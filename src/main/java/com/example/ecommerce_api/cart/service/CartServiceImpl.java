@@ -48,7 +48,23 @@ public class CartServiceImpl implements CartService {
     public CartResponse getCurrentCart() {
 
         User user = securityUtils.getCurrentUser();
-        return cartMapper.toResponse(getOrCreateCart(user));
+        Cart cart = getOrCreateCart(user);
+        refreshPrices(cart);
+        return cartMapper.toResponse(cart);
+    }
+
+    /**
+     * Re-prices every item to the variant's current price (price or discount changes since it was
+     * added) and recalculates the totals. Dirty checking only writes rows whose price actually changed.
+     */
+    private void refreshPrices(Cart cart) {
+        for (CartItem item : cart.getItems()) {
+            BigDecimal current = resolveUnitPrice(item.getProductVariants());
+            if (item.getPrice() == null || item.getPrice().compareTo(current) != 0) {
+                item.setPrice(current);
+            }
+        }
+        cart.recalculateTotalPrice();
     }
 
     @Override

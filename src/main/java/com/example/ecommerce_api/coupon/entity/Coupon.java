@@ -60,6 +60,10 @@ public class Coupon {
     @Column(nullable = false)
     private boolean active = true;
 
+    // Listed for shoppers in the storefront; false = only customers who know the code can use it
+    @Column(name = "show_in_storefront", nullable = false)
+    private boolean showInStorefront = false;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

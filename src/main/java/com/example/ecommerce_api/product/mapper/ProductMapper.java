@@ -13,6 +13,7 @@ import com.example.ecommerce_api.product.entity.ProductVariants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,6 +33,8 @@ public class ProductMapper {
         product.setSlug(productRequest.getSlug());
         product.setDescription(productRequest.getDescription());
         product.setImageCover(productRequest.getImageCover());
+        product.setProductType(productRequest.getProductType());
+        product.setDiscountPercent(normalizeDiscount(productRequest.getDiscountPercent()));
 
         return product;
 
@@ -72,10 +75,12 @@ public class ProductMapper {
         return ProductResponse.builder()
                 .id(product.getId())
                 .status(product.getStatus())
+                .productType(product.getProductType())
                 .title(product.getTitle())
                 .slug(product.getSlug())
                 .description(product.getDescription())
                 .imageCover(product.getImageCover())
+                .discountPercent(product.getDiscountPercent())
                 .ratingsAverage(product.getRatingsAverage())
                 .ratingsQuantity(product.getRatingsQuantity())
                 .subCategory(toSubCategory(product.getSubCategory()))
@@ -102,6 +107,11 @@ public class ProductMapper {
         return products.stream().map(this::toResponse).toList();
     }
 
+
+    /** 0 / negative means "no discount", stored as null (same rule as variants). */
+    public static BigDecimal normalizeDiscount(BigDecimal discountPercent) {
+        return discountPercent == null || discountPercent.signum() <= 0 ? null : discountPercent;
+    }
 
     private SubCategoryResponse toSubCategory(SubCategory category) {
         return SubCategoryResponse.builder()

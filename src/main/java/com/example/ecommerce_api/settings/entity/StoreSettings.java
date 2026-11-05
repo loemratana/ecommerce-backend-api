@@ -63,6 +63,18 @@ public class StoreSettings {
     @Column(name = "return_window_days", nullable = false)
     private Integer returnWindowDays;
 
+    // ----- inventory ------------------------------------------------------------------------
+
+    /** Available stock at or below this is "low": status badge, dashboard stats and the low-stock alert. */
+    @Column(name = "low_stock_threshold", nullable = false)
+    private Integer lowStockThreshold;
+
+    // ----- notifications --------------------------------------------------------------------
+
+    /** Email customers an order confirmation when they place an order (needs SMTP). */
+    @Column(name = "customer_order_email", nullable = false)
+    private Boolean customerOrderEmail;
+
     // ----- localization ---------------------------------------------------------------------
 
     /** ISO 4217 code. Only a label: amounts are never converted. */

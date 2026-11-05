@@ -23,6 +23,7 @@ public class CouponResponse {
     private LocalDateTime expiryDate;
 
     private Boolean active;
+    private Boolean showInStorefront;
 
     private Integer usageLimit;
 

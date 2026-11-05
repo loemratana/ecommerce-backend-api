@@ -2,6 +2,7 @@ package com.example.ecommerce_api.product.sevices.impl;
 
 
 import com.example.ecommerce_api.Enum.CatalogStatus;
+import com.example.ecommerce_api.Enum.ProductType;
 import com.example.ecommerce_api.Enum.OrderStatus;
 import com.example.ecommerce_api.brand.entity.Brand;
 import com.example.ecommerce_api.brand.repository.BrandRepository;
@@ -12,6 +13,7 @@ import com.example.ecommerce_api.Enum.InventoryTransactionType;
 import com.example.ecommerce_api.inventory.entity.Inventory;
 import com.example.ecommerce_api.inventory.entity.InventoryTransaction;
 import com.example.ecommerce_api.inventory.repository.InventoryTransactionRepository;
+import com.example.ecommerce_api.notification.service.NotificationService;
 import com.example.ecommerce_api.product.dto.request.ProductImageRequest;
 import com.example.ecommerce_api.product.dto.request.ProductRequest;
 import com.example.ecommerce_api.product.dto.request.ProductVariantsRequest;
@@ -31,6 +33,7 @@ import com.example.ecommerce_api.product.repository.ProductRepository;
 import com.example.ecommerce_api.product.repository.ProductSizeRepository;
 import com.example.ecommerce_api.product.repository.ProductVariantRepository;
 import com.example.ecommerce_api.product.sevices.ProductService;
+import com.example.ecommerce_api.settings.service.SettingsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -54,7 +57,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ProductServiceImpl implements ProductService {
 
-    private static final int LOW_STOCK_THRESHOLD = 10;
     private static final int MAX_LIMIT = 50;
     private final ProductRepository productRepository;
     private final SubCategoryRepository subCategoryRepository;
@@ -65,6 +67,8 @@ public class ProductServiceImpl implements ProductService {
     private final ProductImageMapper productImageMapper;
     private final ProductSizeRepository productSizeRepository;
     private final InventoryTransactionRepository inventoryTransactionRepository;
+    private final SettingsService settingsService;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -90,7 +94,9 @@ public class ProductServiceImpl implements ProductService {
         Product savedProduct = productRepository.save(product);
         logInitialStock(savedProduct.getVariants());
 
-        return productMapper.toResponse(savedProduct);
+        ProductResponse response = productMapper.toResponse(savedProduct);
+        notificationService.notifyNewProduct(response);   // sent after commit
+        return response;
     }
 
     @Override
@@ -101,9 +107,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductResponse> getAll(CatalogStatus status, String title, Long brandId, Long subCategoryId, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, BigDecimal minRating, Pageable pageable) {
+    public Page<ProductResponse> getAll(CatalogStatus status, ProductType type, String title, Long brandId, Long subCategoryId, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, BigDecimal minRating, Pageable pageable) {
 
-        Specification<Product> specification = ProductSpecification.filter(status, title, brandId, subCategoryId, categoryId, minPrice, maxPrice, minRating);
+        Specification<Product> specification = ProductSpecification.filter(status, type, title, brandId, subCategoryId, categoryId, minPrice, maxPrice, minRating);
 
         Page<Product> product = productRepository.findAll(specification, pageable);
 
@@ -130,6 +136,8 @@ public class ProductServiceImpl implements ProductService {
         product.setSlug(request.getSlug());
         product.setDescription(request.getDescription());
         product.setImageCover(request.getImageCover());
+        product.setProductType(request.getProductType());
+        product.setDiscountPercent(ProductMapper.normalizeDiscount(request.getDiscountPercent()));
         product.setSubCategory(subCategory);
         product.setBrand(brand);
 
@@ -178,6 +186,26 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getRelated(Long id, int limit) {
+
+        Product product = productRepository.findByIdWithAllAssociations(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+
+        // untyped and UNISEX products relate to everything; MEN / WOMEN only to their own type and UNISEX
+        ProductType type = product.getProductType();
+        List<ProductType> types = type == null || type == ProductType.UNISEX
+                ? List.of(ProductType.values())
+                : type.withUnisex();
+
+        List<Product> related = productRepository.findRelated(
+                id, product.getSubCategory(), product.getSubCategory().getCategory(), types,
+                PageRequest.of(0, clamp(limit)));
+
+        return productMapper.toResponse(related);
+    }
+
+    @Override
     public List<ProductSummaryResponse> getBestSellers(int days, int limit) {
 
         LocalDateTime since = LocalDateTime.now().minusDays(days);
@@ -214,7 +242,7 @@ public class ProductServiceImpl implements ProductService {
 
         // Stock comes from the variants' inventory (available = on hand - reserved).
         long activeProducts = productRepository.countByAvailableStockBetween(1, Long.MAX_VALUE);
-        long lowStock = productRepository.countByAvailableStockBetween(1, LOW_STOCK_THRESHOLD);
+        long lowStock = productRepository.countByAvailableStockBetween(1, settingsService.lowStockThreshold());
         long outOfStock = productRepository.countByAvailableStockBetween(Long.MIN_VALUE, 0);
 
         double activeProductsPercent = totalProducts == 0

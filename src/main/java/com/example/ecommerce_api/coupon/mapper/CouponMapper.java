@@ -21,6 +21,7 @@ public class CouponMapper
         coupon.setMinOrderAmount(request.getMinOrderAmount());
         coupon.setExpiryDate(request.getExpiryDate());
         coupon.setActive(request.getActive() !=null ? request.getActive() : true);
+        coupon.setShowInStorefront(Boolean.TRUE.equals(request.getShowInStorefront()));
         coupon.setUsageLimit(request.getUsageLimit());
         coupon.setUsedCount(0);
 
@@ -35,6 +36,9 @@ public class CouponMapper
         coupon.setMinOrderAmount(request.getMinOrderAmount());
         coupon.setExpiryDate(request.getExpiryDate());
         coupon.setActive(request.getActive());
+        if (request.getShowInStorefront() != null) {
+            coupon.setShowInStorefront(request.getShowInStorefront());
+        }
         coupon.setUsageLimit(request.getUsageLimit());
 
     }
@@ -52,6 +56,7 @@ public class CouponMapper
                 .minOrderAmount(coupon.getMinOrderAmount())
                 .expiryDate(coupon.getExpiryDate())
                 .active(coupon.isActive())
+                .showInStorefront(coupon.isShowInStorefront())
                 .usageLimit(coupon.getUsageLimit())
                 .usedCount(coupon.getUsedCount())
                 // Calculate remaining usage

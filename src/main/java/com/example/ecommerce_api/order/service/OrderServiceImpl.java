@@ -11,6 +11,7 @@ import com.example.ecommerce_api.common.response.PageResponse;
 import com.example.ecommerce_api.coupon.entity.Coupon;
 import com.example.ecommerce_api.coupon.repository.CouponRepository;
 import com.example.ecommerce_api.inventory.service.InventoryService;
+import com.example.ecommerce_api.notification.service.NotificationService;
 import com.example.ecommerce_api.order.dto.*;
 import com.example.ecommerce_api.order.entity.Order;
 import com.example.ecommerce_api.order.entity.OrderCoupon;
@@ -70,6 +71,7 @@ public class OrderServiceImpl implements OrderService{
     private final SecurityUtils securityUtils;
     private final SettingsService settingsService;
     private final PaymentService paymentService;
+    private final NotificationService notificationService;
 
 /*
 PlaceOrderRequest
@@ -167,6 +169,7 @@ OrderResponse
         }
 
         log.info("Order {} placed by user {} total={}", saved.getOrderNumber(), user.getId(), saved.getTotalOrderPrice());
+        notificationService.notifyNewOrder(response);   // sent after commit, not if anything above rolls back
         return response;
     }
 

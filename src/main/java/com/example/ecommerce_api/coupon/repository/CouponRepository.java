@@ -1,6 +1,7 @@
 package com.example.ecommerce_api.coupon.repository;
 
 import com.example.ecommerce_api.coupon.entity.Coupon;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -8,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -28,6 +30,17 @@ AND (c.usageLimit IS NULL or c.usedCount < c.usageLimit)
 """
     )
     Optional<Coupon> findValidCoupon(@Param("code") String code, @Param("now") LocalDateTime now);
+
+    /** Coupons listed in the storefront that a shopper can use right now, the ones ending soonest first. */
+    @Query("""
+            SELECT c FROM Coupon c
+            WHERE c.active = true
+              AND c.showInStorefront = true
+              AND c.expiryDate > :now
+              AND (c.usageLimit IS NULL OR c.usedCount < c.usageLimit)
+            ORDER BY c.expiryDate ASC
+            """)
+    List<Coupon> findAvailable(@Param("now") LocalDateTime now, Pageable pageable);
 
     /**
      * Atomically increments used_count.
